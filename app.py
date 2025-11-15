@@ -8,25 +8,25 @@ from validators import url
 # تهيئة تطبيق Flask
 app = Flask(__name__)
 
-# --- تعريف 20 قاعدة أمنية مُركزة (لأقصى كفاءة) ---
+# --- تعريف 20 قاعدة أمنية مُركزة ---
 SECURITY_RULES = [
     # قواعد المخاطر الحرجة (النتيجة المتوقعة لرابطك هي أكثر من 150 نقطة من هذه القواعد)
     { "check": lambda link, content: content is not None and bool(re.search(r'<form[^>]*\b(password|user|credit|card|cvv|secure|login|pin)\b', content, re.IGNORECASE | re.DOTALL)), "name": "نموذج تصيد يطلب معلومات حساسة (Phishing Form)", "risk": "وجود نموذج إدخال يطلب كلمات مرور أو بيانات حساسة. **خطر حرج للغاية.**", "points": 100 },
     { "check": lambda link, content: link.lower().endswith(('.exe', '.bat', '.cmd', '.scr', '.vbs', '.js', '.jar', '.zip', '.rar')), "name": "الانتهاء بملف تنفيذي أو مضغوط ضار", "risk": "الرابط سيقوم بتحميل أو تشغيل ملف تنفيذي ضار مباشرة.", "points": 80 },
-    { "check": lambda link, content: '@' in link, "name": "رمز @ في الرابط (Obfuscation)", "risk": "يستخدم لخداع المتصفح والزائر حول الوجهة الحقيقية. (موجود في رابط الاختبار الخاص بك)", "points": 40 },
-    { "check": lambda link, content: link.lower().startswith('http://'), "name": "بروتوكول HTTP غير الآمن", "risk": "الرابط غير مشفر (غير HTTPS). (موجود في رابط الاختبار الخاص بك)", "points": 35 },
+    { "check": lambda link, content: '@' in link, "name": "رمز @ في الرابط (Obfuscation)", "risk": "يستخدم لخداع المتصفح والزائر حول الوجهة الحقيقية.", "points": 40 },
+    { "check": lambda link, content: link.lower().startswith('http://'), "name": "بروتوكول HTTP غير الآمن", "risk": "الرابط غير مشفر (غير HTTPS).", "points": 35 },
     { "check": lambda link, content: 'xn--' in link.lower(), "name": "وجود Punycode/IDN (خداع الأحرف الدولية)", "risk": "يشير إلى انتحال شخصية موقع آخر.", "points": 35 },
     { "check": lambda link, content: any(re.search(rf'{word}', link.lower()) for word in ['faceb?ook', 'g00gle', 'appple', 'micr0s0ft', 'payp@l']), "name": "خطأ إملائي في النطاق (Typosquatting)", "risk": "انتحال شخصية المواقع الكبرى باستخدام أخطاء إملائية ذكية.", "points": 50 },
-    { "check": lambda link, content: any(company in link.lower() for company in ['microsoft', 'apple', 'amazon', 'facebook', 'google']) and 'https' not in link.lower(), "name": "اسم شركة كبرى بدون تشفير HTTPS", "risk": "هذا تزوير واضح. (موجود في رابط الاختبار الخاص بك)", "points": 30 },
+    { "check": lambda link, content: any(company in link.lower() for company in ['microsoft', 'apple', 'amazon', 'facebook', 'google']) and 'https' not in link.lower(), "name": "اسم شركة كبرى بدون تشفير HTTPS", "risk": "هذا تزوير واضح.", "points": 30 },
     { "check": lambda link, content: bool(re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', urlparse(link).netloc)), "name": "استخدام رقم IP مباشر في النطاق", "risk": "يشير إلى خادم مؤقت أو غير مسجل رسمياً.", "points": 30 },
     
     # قواعد المخاطر العالية الأخرى
-    { "check": lambda link, content: 'login' in link.lower() and urlparse(link).netloc.count('.') > 2, "name": "كلمة 'Login' في نطاق فرعي عميق", "risk": "محاولة للتخفي وانتحال صفحات الدخول. (موجود في رابط الاختبار الخاص بك)", "points": 25 },
+    { "check": lambda link, content: 'login' in link.lower() and urlparse(link).netloc.count('.') > 2, "name": "كلمة 'Login' في نطاق فرعي عميق", "risk": "محاولة للتخفي وانتحال صفحات الدخول.", "points": 25 },
     { "check": lambda link, content: any(word in link.lower() for word in ['secure', 'safe', 'trust', 'verify']) and 'https' not in link.lower(), "name": "كلمات أمان زائفة بدون تشفير", "risk": "محاولة إيهام المستخدم بالأمان (HTTP مع كلمة 'secure').", "points": 30 },
     { "check": lambda link, content: content is not None and bool(re.search(r'document\.write|eval\(|unescape\(', content, re.IGNORECASE)), "name": "كود JavaScript مُشفر أو خطير في المحتوى", "risk": "وجود دوال تُستخدم لتنفيذ كود ضار أو إعادة توجيه مخفية.", "points": 20 },
     { "check": lambda link, content: content is not None and bool(re.search(r'window\.location\.replace|window\.location\.href|meta\s*http-equiv\s*=\s*"refresh"', content, re.IGNORECASE)), "name": "كود إعادة توجيه متقدم (Client-Side Redirect)", "risk": "يشير إلى محاولة نقل المستخدم فوراً إلى رابط آخر باستخدام جافاسكريبت.", "points": 15 },
-    { "check": lambda link, content: content is not None and 'paypal' in link.lower() and 'title' in content.lower() and 'update' in content.lower(), "name": "عنوان صفحة يطلب 'تحديث' لعلامة تجارية مشهورة", "risk": "نمط نموذجي لصفحات التصيد. (موجود في رابط الاختبار الخاص بك)", "points": 25 },
-    { "check": lambda link, content: any(ext in link.lower() for ext in ['.tk', '.ga', '.ml', '.xyz', '.cc', '.biz', '.top']), "name": "انتهاء نطاق مشبوه (TLD)", "risk": "امتدادات النطاقات هذه غالباً ما تستخدم في حملات التصيد. (موجود في رابط الاختبار الخاص بك)", "points": 12 },
+    { "check": lambda link, content: content is not None and 'paypal' in link.lower() and 'title' in content.lower() and 'update' in content.lower(), "name": "عنوان صفحة يطلب 'تحديث' لعلامة تجارية مشهورة", "risk": "نمط نموذجي لصفحات التصيد.", "points": 25 },
+    { "check": lambda link, content: any(ext in link.lower() for ext in ['.tk', '.ga', '.ml', '.xyz', '.cc', '.biz', '.top']), "name": "انتهاء نطاق مشبوه (TLD)", "risk": "امتدادات النطاقات هذه غالباً ما تستخدم في حملات التصيد.", "points": 12 },
     
     # قواعد المخاطر المتوسطة
     { "check": lambda link, content: any(service in link.lower() for service in ["bit.ly", "tinyurl", "ow.ly", "t.co"]), "name": "اختصار الرابط (URL Shortener)", "risk": "قد يخفي الوجهة الحقيقية الضارة.", "points": 10 },
@@ -37,17 +37,17 @@ SECURITY_RULES = [
     { "check": lambda link, content: link.count('=') > 7, "name": "كثرة المتغيرات في الرابط (>7)", "risk": "قد تكون محاولة لحقن أو تمرير معلمات ضخمة.", "points": 4 },
 ]
 
-# --- دالة التحليل الأمني ---
+# --- دالة التحليل الأمني (مع التعديل الوقائي) ---
 def perform_security_scan(link):
     suspicious_points = 0
     page_content = None 
     final_link = link 
     violated_rules = []
-    page_content_warning = "لم يتم إجراء تحليل للمحتوى بعد..."
-    
-    # 1. فحص الاتصال بالرابط والحصول على المحتوى (تم تقليل المهلة إلى 5 ثوانٍ)
+    page_content_warning = "تم تهيئة التحليل." # قيمة مبدئية
+
+    # 1. فحص الاتصال بالرابط (مهلة 5 ثوانٍ)
     try:
-        response = requests.get(link, timeout=5, allow_redirects=True) # **تعديل: 5 ثوانٍ مهلة**
+        response = requests.get(link, timeout=5, allow_redirects=True) 
         status_code = response.status_code
         final_link = response.url
         page_content = response.text 
@@ -71,15 +71,16 @@ def perform_security_scan(link):
                 violated_rules.append({"name": "محتوى صفحة قصير جداً", "risk_description": "يشير إلى أن الصفحة فارغة أو أنها مجرد صفحة إعادة توجيه فورية مخفية.", "points_added": 15})
             
     except requests.exceptions.RequestException as e:
-        # **هذا الجزء يتم تنفيذه لرابط الاختبار الخاص بك**
+        # ⚠️ في حالة الفشل الحاد (مثل رابط التصيد الخاص بك):
         suspicious_points += 30 
         violated_rules.append({"name": "فشل حاد في الاتصال/مهلة", "risk_description": f"فشل الاتصال بالخادم بعد 5 ثوانٍ، مما يشير إلى حظر أو عدم وجود خادم. ({type(e).__name__})", "points_added": 30})
         page_content_warning = f"خطأ حاد في الاتصال بالرابط أو حدوث مهلة. (تم إضافة 30 نقطة خطر)"
         final_link = link 
-        
+        page_content = "" # مهم: لضمان أن تحليل المحتوى لن يعمل على None
+
     # 2. تطبيق جميع القواعد الأمنية المتبقية (تُطبق على الرابط الأصلي حتى لو فشل الاتصال)
     link_for_rules = final_link
-    content_to_check = page_content if page_content else ""
+    content_to_check = page_content # الآن هو إما المحتوى أو سلسلة فارغة ""
 
     for rule in SECURITY_RULES:
         try:
@@ -109,7 +110,7 @@ def perform_security_scan(link):
         risk_score = "Medium"
         result_message = "⚠️ خطر متوسط. يحتوي على بعض العناصر المشبوهة التي تقلل من الثقة به. يجب استخدامه بحذر شديد."
     
-    # 4. إعادة النتيجة
+    # 4. إعادة النتيجة (ببنية JSON مضمونة)
     return {
         "status": "success" if suspicious_points <= 10 else "warning" if suspicious_points <= 25 else "error",
         "message": f"تحليل مكتمل بدقة قصوى. تم تطبيق {len(SECURITY_RULES) + 3} قاعدة فحص (شاملة قواعد الاتصال).",
@@ -148,4 +149,3 @@ def analyze_link():
     analysis_result = perform_security_scan(link_to_analyze) 
     
     return jsonify(analysis_result), 200
-
