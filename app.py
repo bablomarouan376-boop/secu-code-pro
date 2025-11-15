@@ -1,197 +1,439 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محلل الروابط الأمني الاحترافي</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f7f9fc; }
-        .text-shadow-custom { text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
-        /* تصميم مخصص ليكون محترفًا وجذابًا */
-        .risk-color-Critical { background-color: #fef2f2; border-color: #f87171; color: #b91c1c; }
-        .risk-color-High { background-color: #fff7ed; border-color: #fb923c; color: #c2410c; }
-        .risk-color-Medium { background-color: #fffbeb; border-color: #facc15; color: #a16207; }
-        .risk-color-Low { background-color: #f0fdf4; border-color: #4ade80; color: #166534; }
-        .risk-color-default { background-color: #e0f2f1; border-color: #2dd4bf; color: #0f766e; }
+import os
+from flask import Flask, request, jsonify, render_template
+import requests
+import re 
+from urllib.parse import urlparse
+from validators import url
 
-    </style>
-</head>
-<body class="p-4 md:p-8">
+# تهيئة تطبيق Flask
+app = Flask(__name__)
 
-    <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl p-6 md:p-10 border border-gray-100">
+# --- تعريف 42 قاعدة أمنية احترافية ومُعدلة (نقاط المخاطر مضخمة جداً) ---
+SECURITY_RULES = [
+    # ----------------------------------------------------
+    # مجموعة 1: قواعد فحص البنية العامة والتخفي (Obfuscation)
+    # ----------------------------------------------------
+    {
+        "check": lambda link, content: any(service in link.lower() for service in ["bit.ly", "goo.gl", "tinyurl", "ow.ly", "cutt.ly", "is.gd", "t.co", "rebrand.ly"]),
+        "name": "اختصار الرابط (URL Shortener)",
+        "risk": "قد يخفي الوجهة الحقيقية الضارة خلف رابط قصير وموثوق.",
+        "points": 10 
+    },
+    {
+        "check": lambda link, content: bool(re.search(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', urlparse(link).netloc)),
+        "name": "استخدام رقم IP مباشر في النطاق",
+        "risk": "يشير إلى خادم مؤقت أو موقع غير مسجل رسمياً. **خطر عالٍ جداً.**",
+        "points": 30 
+    },
+    {
+        "check": lambda link, content: '@' in link,
+        "name": "وجود رمز @ في الرابط (User Info Obfuscation)",
+        "risk": "يستخدم لخداع المتصفح والزائر حول الوجهة الحقيقية. **خطر حرج.**",
+        "points": 40 
+    },
+    {
+        "check": lambda link, content: len(link) > 100,
+        "name": "الطول المبالغ فيه للرابط (>100 حرف)",
+        "risk": "الروابط الطويلة جداً تستخدم أحياناً لإخفاء محتوى ضار.",
+        "points": 5 
+    },
+    {
+        "check": lambda link, content: link.lower().startswith('http://'),
+        "name": "بروتوكول HTTP غير الآمن",
+        "risk": "الرابط غير مشفر (غير HTTPS). **خطر حرج.**",
+        "points": 30 
+    },
+    {
+        "check": lambda link, content: bool(re.search(r':\d{4,}', link)),
+        "name": "استخدام منفذ غير قياسي",
+        "risk": "قد يشير إلى تشغيل خدمات غير تقليدية أو غير معتادة.",
+        "points": 8 
+    },
+    {
+        "check": lambda link, content: link.count('=') > 7,
+        "name": "كثرة المتغيرات في الرابط (>7)",
+        "risk": "قد تكون محاولة لحقن أو تمرير معلمات ضخمة.",
+        "points": 4
+    },
+    {
+        "check": lambda link, content: link.count('.') > 4,
+        "name": "كثرة النطاقات الفرعية العميقة (>4)",
+        "risk": "تستخدم لتقليد المواقع الشرعية (مثل: secure.login.google.com.xyz.com). **خداع بصري واضح.**",
+        "points": 15 
+    },
+    {
+        "check": lambda link, content: link.count('http') > 1,
+        "name": "تكرار البروتوكول داخل الرابط",
+        "risk": "محاولة خداع متقدمة لتمرير http/https داخل مسار الرابط.",
+        "points": 15 
+    },
+    {
+        "check": lambda link, content: 'xn--' in link.lower(),
+        "name": "وجود Punycode/IDN (خداع الأحرف الدولية)",
+        "risk": "يشير إلى استخدام أسماء نطاقات دولية قد تُستخدم لانتحال شخصية موقع آخر. **خطر حرج.**",
+        "points": 35 
+    },
+    {
+        "check": lambda link, content: bool(re.search(r'%.{2}', link)),
+        "name": "وجود ترميز URL (%XX)",
+        "risk": "يشير إلى وجود أحرف مشفرة قد تخفي كلمات مفتاحية ضارة.",
+        "points": 5
+    },
+    {
+        "check": lambda link, content: 'data:' in link.lower() or 'javascript:' in link.lower(),
+        "name": "استخدام أنظمة URI خطيرة (Data/JavaScript)",
+        "risk": "يسمح بتشغيل كود JavaScript مباشرة أو تضمين محتوى كقاعدة 64. **خطر عالٍ جداً.**",
+        "points": 30 
+    },
+    {
+        "check": lambda link, content: bool(re.search(r'\.\./|\.\.\\|\.\.%2f|\.\.%5c', link, re.IGNORECASE)),
+        "name": "مؤشر لـ Directory Traversal",
+        "risk": "محاولة للوصول إلى ملفات خارج المسار المخصص على الخادم.",
+        "points": 12 
+    },
+    {
+        "check": lambda link, content: '//' in urlparse(link).path,
+        "name": "مسارات مزدوجة متكررة (Redundant Slashes)",
+        "risk": "قد يُستخدم للتخفي أو لإرباك المتصفحات والفلاتر الأمنية البسيطة.",
+        "points": 4
+    },
+    {
+        "check": lambda link, content: len(urlparse(link).netloc.split('.')[0]) > 25,
+        "name": "طول مبالغ فيه للنطاق الفرعي (Subdomain)",
+        "risk": "النطاقات الفرعية الطويلة جداً غالباً ما تكون مؤشراً على الإزعاج أو الخداع.",
+        "points": 6
+    },
+    
+    # ----------------------------------------------------
+    # مجموعة 2: قواعد فحص النطاق و Typosquatting (الاحتيال الإملائي)
+    # ----------------------------------------------------
+    {
+        "check": lambda link, content: any(ext in link.lower() for ext in ['.cf', '.tk', '.ga', '.ml', '.xyz', '.cc', '.info', '.biz', '.top']),
+        "name": "انتهاء نطاق مشبوه (TLD)",
+        "risk": "امتدادات النطاقات هذه غالباً ما تستخدم في حملات التصيد والاحتيال.",
+        "points": 10 
+    },
+    {
+        "check": lambda link, content: any(re.search(rf'{word}', link.lower()) for word in ['faceb?ook', 'g00gle', 'appple', 'micr0s0ft', 'am@zon', 'payp@l']),
+        "name": "خطأ إملائي في النطاق (Typosquatting - متقدم)",
+        "risk": "انتحال شخصية المواقع الكبرى باستخدام أخطاء إملائية ذكية. **خطر حرج.**",
+        "points": 50 
+    },
+    {
+        "check": lambda link, content: any(company in link.lower() for company in ['microsoft', 'apple', 'amazon', 'facebook', 'google']) and 'https' not in link.lower(),
+        "name": "استخدام اسم شركة كبرى بدون تشفير HTTPS",
+        "risk": "لا يمكن لشركة كبرى أن تستخدم HTTP. هذا تزوير واضح. **خطر عالٍ جداً.**",
+        "points": 30 
+    },
+    {
+        "check": lambda link, content: any(char.isdigit() for char in urlparse(link).netloc.split('.')[1]) and link.count('.') >= 1,
+        "name": "نطاق رئيسي يحتوي على أرقام",
+        "risk": "النطاقات الرئيسية التي تحتوي على أرقام غالباً ما تكون مشبوهة.",
+        "points": 8 
+    },
+    {
+        "check": lambda link, content: len(urlparse(link).netloc.split('.')[0]) > 20 and len(urlparse(link).netloc.split('.')[0].split('-')) > 3,
+        "name": "نطاق فرعي ضخم ومفصول بالواصلات",
+        "risk": "حشو كلمات مفتاحية لتجنب الفلاتر.",
+        "points": 6
+    },
+    {
+        "check": lambda link, content: link.count('free') > 1 or link.count('verify') > 1,
+        "name": "تكرار كلمات الخداع (Free/Verify)",
+        "risk": "الاستخدام المفرط لكلمات الإغراء والحاجة للتحقق.",
+        "points": 9 
+    },
+    # ----------------------------------------------------
+    # مجموعة 3: قواعد فحص المسار والملفات (Path & Files)
+    # ----------------------------------------------------
+    {
+        "check": lambda link, content: any(word in link.lower() for word in ['gift', 'prize', 'free', 'win', 'claim', 'discount', 'bonus', 'crypto', 'wallet']),
+        "name": "استخدام كلمات خداع اجتماعي شائعة في المسار",
+        "risk": "يشير إلى محاولة خداع اجتماعي.",
+        "points": 7 
+    },
+    {
+        "check": lambda link, content: any(word in link.lower() for word in ['admin', 'upload', 'config', 'backup', 'db', 'password', 'clientarea']),
+        "name": "كلمات إدارة وحساسة في الرابط",
+        "risk": "قد يشير إلى محاولة الوصول لصفحة إدارة.",
+        "points": 10 
+    },
+    {
+        "check": lambda link, content: link.lower().endswith(('.exe', '.bat', '.cmd', '.scr', '.vbs', '.js', '.jar', '.zip', '.rar', '.7z', '.iso', '.bin')),
+        "name": "الانتهاء بملف تنفيذي أو مضغوط ضار",
+        "risk": "يشير إلى أن الرابط سيقوم بتحميل أو تشغيل ملف تنفيذي ضار مباشرة. **خطر حرج للغاية.**",
+        "points": 80 
+    },
+    {
+        "check": lambda link, content: bool(re.search(r'/\d{10,}/', link)),
+        "name": "سلسلة أرقام طويلة جداً في المسار",
+        "risk": "قد تشير إلى ملفات تم تحميلها عشوائياً.",
+        "points": 4
+    },
+    {
+        "check": lambda link, content: link.count('?') > 1,
+        "name": "وجود أكثر من علامة استفهام في الرابط",
+        "risk": "الاستخدام غير القياسي لعلامة الاستفهام.",
+        "points": 5 
+    },
+    {
+        "check": lambda link, content: 'base64' in link.lower() or 'hex' in link.lower(),
+        "name": "استخدام كلمات الترميز (Base64/Hex)",
+        "risk": "يشير إلى محاولة تمرير بيانات مشفرة لتجاوز فلاتر التحليل البسيط.",
+        "points": 8 
+    },
+    {
+        "check": lambda link, content: bool(re.search(r'[\u0600-\u06FF]', link)) and 'xn--' not in link.lower(),
+        "name": "أحرف عربية أو غير لاتينية غير مشفرة",
+        "risk": "قد يشير إلى ترميز غير صحيح.",
+        "points": 5 
+    },
+    {
+        "check": lambda link, content: link.lower().count('/') > 7,
+        "name": "عمق المسار المبالغ فيه (>7 مستويات)",
+        "risk": "قد يدل على موقع يتمتع ببنية ملفات معقدة ومخفية بشكل غير طبيعي.",
+        "points": 4
+    },
+    {
+        "check": lambda link, content: 'index.html' in link.lower() or 'default.aspx' in link.lower(),
+        "name": "اسم ملف صفحة افتراضية في المسار",
+        "risk": "في الغالب لا تحتاج المواقع الكبيرة لذكر هذه الملفات بشكل صريح في الرابط.",
+        "points": 2
+    },
+    {
+        "check": lambda link, content: 'login' in link.lower() and urlparse(link).netloc.count('.') > 2,
+        "name": "كلمة 'Login' في نطاق فرعي عميق",
+        "risk": "مثل: `login.secure.paypal.com.scam.com` - محاولة للتخفي. **خطر عالٍ.**",
+        "points": 20 
+    },
+    {
+        "check": lambda link, content: any(param in urlparse(link).query for param in ['redir', 'forward', 'url']),
+        "name": "وجود متغيرات إعادة التوجيه (Redirect Parameters)",
+        "risk": "قد تسمح هذه المتغيرات (مثل ?url=) بالاستغلال لتنفيذ عمليات إعادة توجيه مفتوحة.",
+        "points": 10 
+    },
+    # ----------------------------------------------------
+    # مجموعة 4: قواعد فحص الأمان والسلوك والمحتوى
+    # ----------------------------------------------------
+    {
+        "check": lambda link, content: any(word in link.lower() for word in ['secure', 'safe', 'trust', 'login', 'verify', 'ssl']) and 'https' not in link.lower(),
+        "name": "كلمات أمان زائفة بدون تشفير",
+        "risk": "محاولة إيهام المستخدم بالأمان (مثلاً: رابط فيه 'secure' ولكنه HTTP). **خطر عالٍ جداً.**",
+        "points": 30 
+    },
+    {
+        "check": lambda link, content: any(word in urlparse(link).query.lower() for word in ['session', 'cookie', 'token', 'auth', 'apikey']),
+        "name": "تضمين بيانات الجلسة/المصادقة الحساسة في متغيرات الرابط",
+        "risk": "قد يشير إلى محاولة حقن أو سرقة بيانات الجلسة عبر الرابط.",
+        "points": 15 
+    },
+    {
+        "check": lambda link, content: len(link) > 40 and link != link.lower() and link != link.upper(),
+        "name": "أحرف كبيرة وصغيرة عشوائية",
+        "risk": "تستخدم لتجاوز فلاتر البريد المزعج.",
+        "points": 3
+    },
+    {
+        "check": lambda link, content: content is not None and bool(re.search(r'<form[^>]*\b(password|user|credit|card|cvv|secure|login|pin|social security)\b', content, re.IGNORECASE | re.DOTALL)),
+        "name": "نموذج يطلب معلومات حساسة (Phishing Form)",
+        "risk": "وجود نموذج إدخال يطلب كلمات مرور أو بيانات بطاقة ائتمان. **هذا هو المؤشر الأقوى على موقع تصيد.**",
+        "points": 100 
+    },
+    {
+        # التعديل: لن يتم الفحص هنا، سيتم التعامل مع طول المحتوى وحالة 200/غير 200 في دالة perform_security_scan
+        "check": lambda link, content: False, # تم تعطيل هذه القاعدة هنا
+        "name": "محتوى صفحة قصير جداً (Under Construction/Redirect)",
+        "risk": "يشير إلى أن الصفحة فارغة أو أنها مجرد صفحة إعادة توجيه فورية مخفية.",
+        "points": 15 
+    },
+    {
+        "check": lambda link, content: content is not None and bool(re.search(r'iframe\s*src\s*=\s*("|)\s*(http|https)', content, re.IGNORECASE)),
+        "name": "استخدام IFRAME لتحميل محتوى من نطاق خارجي",
+        "risk": "قد يُستخدم لتحميل صفحة التصيد داخل إطار مخفي.",
+        "points": 10 
+    },
+    {
+        "check": lambda link, content: content is not None and bool(re.search(r'document\.write|eval\(|unescape\(', content, re.IGNORECASE)),
+        "name": "كود JavaScript مُشفر أو خطير",
+        "risk": "وجود دوال تُستخدم غالباً لتنفيذ كود ضار أو إعادة توجيه مخفية.",
+        "points": 20 
+    },
+    {
+        "check": lambda link, content: content is not None and bool(re.search(r'window\.location\.replace|window\.location\.href|meta\s*http-equiv\s*=\s*"refresh"', content, re.IGNORECASE)),
+        "name": "كود إعادة توجيه متقدم (Client-Side Redirect)",
+        "risk": "يشير إلى محاولة نقل المستخدم فوراً إلى رابط آخر باستخدام جافاسكريبت أو Meta Tags.",
+        "points": 15 
+    },
+    {
+        "check": lambda link, content: content is not None and bool(re.search(r'<script\s*src\s*=\s*".*?"\s*async\s*defer', content, re.IGNORECASE)),
+        "name": "تحميل ملفات جافاسكريبت خارجية بـ 'Async/Defer'",
+        "risk": "قد يشير إلى برامج تتبع ضارة أو سكربتات تعدين خفية.",
+        "points": 7 
+    },
+    {
+        "check": lambda link, content: content is not None and 'paypal' in link.lower() and 'title' in content.lower() and 'update' in content.lower(),
+        "name": "عنوان الصفحة يطلب 'تحديث' أو 'التحقق' لعلامة تجارية مشهورة",
+        "risk": "نمط نموذجي لصفحات التصيد التي تحاول إجبارك على تحديث معلوماتك البنكية.",
+        "points": 25 
+    }
+]
 
-        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 text-shadow-custom">
-            🛡️ محلل الروابط الأمني الاحترافي
-        </h1>
-        <p class="text-gray-500 mb-8">
-            قم بإدخال أي رابط للتحقق من سلامته عبر تطبيق أكثر من 40 قاعدة فحص متقدمة.
-        </p>
 
-        <div class="flex flex-col sm:flex-row gap-4 mb-8">
-            <input type="url" id="linkInput" placeholder="أدخل الرابط المراد تحليله هنا (مثل: https://example.com)"
-                   class="flex-grow p-3 border-2 border-indigo-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 outline-none"
-                   value=""
-                   aria-label="حقل إدخال الرابط">
-            <button id="analyzeButton" onclick="analyzeLink()"
-                    class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50">
-                تحليل الرابط
-            </button>
-        </div>
+# --- دالة التحليل الأمني (منطق العمل المُحدث) ---
+def perform_security_scan(link):
+    suspicious_points = 0
+    detected_warnings = 0
+    page_content = None 
+    status_code = 0
+    final_link = link 
+    page_content_warning = "لم يتم إجراء تحليل للمحتوى بعد..."
+    
+    # 1. فحص الاتصال بالرابط والحصول على المحتوى
+    try:
+        # requests.get يتبع عمليات إعادة التوجيه تلقائياً
+        response = requests.get(link, timeout=10, allow_redirects=True) 
+        status_code = response.status_code
+        final_link = response.url
+        page_content = response.text 
+        
+        # قاعدة إعادة التوجيه المفرطة
+        if len(response.history) > 3:
+            suspicious_points += 15
+            detected_warnings += 1
+            page_content_warning = f"تحذير: تمت {len(response.history)} عملية إعادة توجيه. (مشبوه)."
 
-        <div id="messageBox" class="p-3 mb-4 rounded-lg hidden" role="alert"></div>
-
-        <div id="resultsArea" class="hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">ملخص التحليل الأمني</h2>
-
-            <div id="summaryCard" class="p-6 rounded-xl border-4 mb-6 transition-all duration-500 risk-color-default">
-                <p class="text-sm font-medium mb-1">مستوى الخطورة:</p>
-                <h3 id="riskScoreDisplay" class="text-4xl font-extrabold">جاري الفحص...</h3>
-                <p id="resultMessageDisplay" class="mt-2 text-lg font-medium"></p>
+        # قاعدة خطأ الحالة (403/404)
+        if status_code != 200:
+            if status_code in [403, 404]:
+                suspicious_points += 20
+            else:
+                suspicious_points += 8
                 
-                <div class="mt-4 text-sm flex flex-col space-y-1">
-                    <p><strong>الرابط الذي تم إدخاله:</strong> <span id="linkInputDisplay" class="font-mono break-all text-indigo-600"></span></p>
-                    <p><strong>الرابط النهائي (بعد التوجيه):</strong> <span id="linkFinalDisplay" class="font-mono break-all text-indigo-600"></span></p>
-                    <p><strong>نقاط الاشتباه الإجمالية:</strong> <span id="pointsDisplay" class="font-bold">0</span> نقطة</p>
-                    <p><strong>حالة جلب المحتوى:</strong> <span id="contentStatusDisplay" class="font-medium"></span></p>
-                </div>
-            </div>
+            detected_warnings += 1
+            page_content_warning = f"تحذير: الرابط يسبب خطأ {status_code}. (هذا يُعتبر مشبوهاً)."
+        else:
+            page_content_warning = f"تم جلب محتوى الصفحة بنجاح. (الحالة: {status_code})"
 
-            <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">القواعد الأمنية المخترقة (<span id="warningsCount">0</span>)</h2>
-            <div id="violatedRulesList" class="space-y-4">
-                </div>
-            
-            <p id="noViolationsMessage" class="hidden p-4 text-center text-gray-500 bg-gray-50 rounded-lg">
-                🎉 لم يتم اكتشاف أي مخالفات أمنية واضحة.
-            </p>
-        </div>
-
-    </div>
-
-    <script>
-        const linkInput = document.getElementById('linkInput');
-        const analyzeButton = document.getElementById('analyzeButton');
-        const messageBox = document.getElementById('messageBox');
-        const resultsArea = document.getElementById('resultsArea');
-        const summaryCard = document.getElementById('summaryCard');
-        const riskScoreDisplay = document.getElementById('riskScoreDisplay');
-        const resultMessageDisplay = document.getElementById('resultMessageDisplay');
-        const linkInputDisplay = document.getElementById('linkInputDisplay');
-        const linkFinalDisplay = document.getElementById('linkFinalDisplay');
-        const pointsDisplay = document.getElementById('pointsDisplay');
-        const contentStatusDisplay = document.getElementById('contentStatusDisplay');
-        const violatedRulesList = document.getElementById('violatedRulesList');
-        const warningsCount = document.getElementById('warningsCount');
-        const noViolationsMessage = document.getElementById('noViolationsMessage');
-        const apiUrl = '/analyze';
-
-        // دالة لعرض رسالة خطأ أو نجاح
-        function showMessage(type, message) {
-            messageBox.classList.remove('hidden', 'bg-red-100', 'border-red-400', 'text-red-700', 'bg-green-100', 'border-green-400', 'text-green-700');
-            messageBox.innerHTML = message;
-
-            if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'border', 'border-red-400', 'text-red-700');
-            } else if (type === 'success') {
-                messageBox.classList.add('bg-green-100', 'border', 'border-green-400', 'text-green-700');
-            }
-        }
-
-        // دالة لتحديث لون بطاقة الملخص بناءً على درجة الخطورة
-        function updateRiskCardColor(riskScore) {
-            // إزالة الألوان السابقة
-            summaryCard.classList.remove('risk-color-Critical', 'risk-color-High', 'risk-color-Medium', 'risk-color-Low', 'risk-color-default');
-            
-            // تطبيق اللون الجديد
-            if (riskScore === 'Critical') {
-                summaryCard.classList.add('risk-color-Critical');
-            } else if (riskScore === 'High') {
-                summaryCard.classList.add('risk-color-High');
-            } else if (riskScore === 'Medium') {
-                summaryCard.classList.add('risk-color-Medium');
-            } else {
-                summaryCard.classList.add('risk-color-Low');
-            }
-        }
-
-        // دالة معالجة التحليل
-        async function analyzeLink() {
-            const link = linkInput.value.trim();
-            resultsArea.classList.add('hidden');
-            messageBox.classList.add('hidden');
-            analyzeButton.disabled = true;
-            analyzeButton.textContent = 'جاري التحليل...';
-            summaryCard.classList.remove('risk-color-Critical', 'risk-color-High', 'risk-color-Medium', 'risk-color-Low');
-            summaryCard.classList.add('risk-color-default');
-            riskScoreDisplay.textContent = 'جاري الفحص...';
-            
-            if (!link) {
-                showMessage('error', 'الرجاء إدخال رابط صالح للتحليل.');
-                analyzeButton.disabled = false;
-                analyzeButton.textContent = 'تحليل الرابط';
-                return;
-            }
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ link: link })
-                });
-
-                const result = await response.json();
-
-                if (!response.ok || result.status.includes('error') || result.status.includes('validation')) {
-                    showMessage('error', result.message || 'حدث خطأ غير متوقع أثناء التحليل.');
-                    return;
-                }
-
-                // عرض النتائج الرئيسية
-                resultsArea.classList.remove('hidden');
-                updateRiskCardColor(result.risk_score);
-                riskScoreDisplay.textContent = result.risk_score;
-                resultMessageDisplay.textContent = result.result_message;
-                linkInputDisplay.textContent = result.link_input;
-                linkFinalDisplay.textContent = result.link_final;
-                pointsDisplay.textContent = result.suspicious_points;
-                contentStatusDisplay.textContent = result.page_content_status;
-                warningsCount.textContent = result.detected_warnings;
-
-                // عرض القواعد المخترقة بالتفصيل
-                violatedRulesList.innerHTML = '';
+            # تطبيق القاعدة 37 هنا (خارج حلقة القواعد لتجنب مشاكل النطاق)
+            if page_content is not None and len(page_content) < 500:
+                rule_37_points = 15
+                suspicious_points += rule_37_points
+                detected_warnings += 1
                 
-                if (result.violated_rules && result.violated_rules.length > 0) {
-                    noViolationsMessage.classList.add('hidden');
-                    result.violated_rules.forEach(rule => {
-                        const ruleElement = document.createElement('div');
-                        ruleElement.className = 'p-4 border border-red-200 bg-red-50 rounded-lg shadow-sm';
-                        ruleElement.innerHTML = `
-                            <p class="font-bold text-red-800 text-lg mb-1">${rule.name}</p>
-                            <p class="text-sm text-gray-700"><strong>وصف الخطر:</strong> ${rule.risk_description}</p>
-                            <p class="text-xs text-red-600 mt-1"><strong>نقاط الخطورة المضافة:</strong> +${rule.points_added}</p>
-                        `;
-                        violatedRulesList.appendChild(ruleElement);
-                    });
-                } else {
-                    noViolationsMessage.classList.remove('hidden');
-                }
+                # إضافة القاعدة 37 إلى القواعد المخترقة يدوياً
+                violated_rules = [{
+                    "name": SECURITY_RULES[36]['name'], # القاعدة 37 هي في الفهرس 36
+                    "risk_description": SECURITY_RULES[36]['risk'],
+                    "points_added": rule_37_points
+                }]
+            else:
+                violated_rules = []
+            
+    except requests.exceptions.RequestException as e:
+        suspicious_points += 30 
+        detected_warnings += 1
+        page_content_warning = f"خطأ حاد في الاتصال بالرابط أو حدوث مهلة (Timeout). ({e})"
+        status_code = 0
+        final_link = link 
+        violated_rules = [] # في حالة الفشل لا يوجد محتوى لتحليله
+        
+    # 2. تطبيق جميع القواعد الأمنية 
+    link_for_rules = final_link
+    content_to_check = page_content if page_content else ""
 
-                showMessage('success', result.message);
+    # تطبيق القواعد الأخرى (بدءًا من القاعدة التي تلي القاعدة 37)
+    for i, rule in enumerate(SECURITY_RULES):
+        try:
+            # تخطي القاعدة 37 (index 36) لأنها تم تطبيقها يدوياً
+            if i == 36:
+                continue
+
+            if rule["check"](link_for_rules, content_to_check):
+                suspicious_points += rule["points"] 
+                detected_warnings += 1
                 
-                // التعديل الذي يضمن رؤية النتائج على الأجهزة الصغيرة
-                window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                # التأكد من عدم تكرار القاعدة 37
+                is_rule_37 = (i == 36)
+                if not is_rule_37:
+                    violated_rules.append({
+                        "name": rule["name"],
+                        "risk_description": rule["risk"],
+                        "points_added": rule["points"]
+                    })
+        except Exception as e:
+            # طباعة الخطأ في حال فشل تطبيق قاعدة معينة
+            print(f"Error applying rule {rule['name']}: {e}") 
+            pass
+    
+    # 3. تحديد مستوى الخطورة بناءً على النقاط 
+    risk_score = "Low"
+    result_message = "🟢 آمن: لم يتم اكتشاف مخاطر واضحة بناءً على التحليل عالي الدقة."
 
-            } catch (error) {
-                console.error("Error during analysis:", error);
-                showMessage('error', 'فشل الاتصال بالخادم. تحقق من الرابط أو اتصال الشبكة.');
-            } finally {
-                analyzeButton.disabled = false;
-                analyzeButton.textContent = 'تحليل الرابط';
-            }
-        }
-    </script>
-</body>
-</html>
+    if suspicious_points > 60: 
+        risk_score = "Critical"
+        result_message = "🔴 خطر حرج جداً! تجاوزت النقاط 60، مما يشير إلى وجود مؤشرات قوية جداً على التصيد أو البرامج الضارة. **يجب عدم فتح هذا الرابط تحت أي ظرف.**"
+    elif suspicious_points > 35: 
+        risk_score = "High"
+        result_message = "🔥 خطر عالٍ! تم اكتشاف مخالفات هيكلية وسلوكية متعددة في الرابط (مثل Typosquatting أو HTTP). يفضل تجنبه تماماً."
+    elif suspicious_points > 15: 
+        risk_score = "Medium"
+        result_message = "⚠️ خطر متوسط. يحتوي على بعض العناصر المشبوهة التي تقلل من الثقة به. يجب استخدامه بحذر شديد."
+    
+    # 4. إعادة النتيجة
+    return {
+        "status": "success" if suspicious_points <= 15 else "warning" if suspicious_points <= 35 else "error",
+        "message": f"تحليل مكتمل بدقة قصوى. تم تطبيق {len(SECURITY_RULES)} قاعدة فحص على الرابط النهائي ({link_for_rules}).",
+        "link_input": link, 
+        "link_final": link_for_rules, 
+        "result_message": result_message,
+        "risk_score": risk_score,
+        "suspicious_points": suspicious_points,
+        "detected_warnings": detected_warnings,
+        "page_content_status": page_content_warning,
+        "violated_rules": violated_rules 
+    }
+
+# --- نقطة النهاية الرئيسية لعرض الواجهة الأمامية ---
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
+
+
+# --- نقطة النهاية للتحليل (API) ---
+@app.route('/analyze', methods=['POST'])
+def analyze_link():
+    
+    try:
+        data = request.get_json()
+        link_to_analyze = data.get('link')
+    except Exception:
+        return jsonify({
+            "status": "critical_error",
+            "message": "خطأ في معالجة بيانات الطلب (JSON).",
+            "error_code": 400
+        }), 400
+
+    if not link_to_analyze or link_to_analyze.strip() == "":
+        return jsonify({
+            "status": "validation_error",
+            "message": "❌ فشل التحقق: الرجاء إدخال رابط. حقل الرابط لا يمكن أن يكون فارغاً.",
+            "error_code": 400
+        }), 400
+
+    # تعديل صغير: إضافة البروتوكول في حالة عدم وجوده
+    if not link_to_analyze.lower().startswith(('http://', 'https://')):
+        link_to_analyze = 'https://' + link_to_analyze
+    
+    # التحقق من صلاحية الرابط باستخدام مكتبة validators
+    if url(link_to_analyze) is not True:
+         return jsonify({
+            "status": "validation_error",
+            "message": "❌ الإدخال غير صحيح. الرجاء إدخال رابط حقيقي وصالح بصيغة URL.",
+            "error_code": 400
+        }), 400
+    
+    
+    analysis_result = perform_security_scan(link_to_analyze) 
+    
+    return jsonify(analysis_result), 200
+
