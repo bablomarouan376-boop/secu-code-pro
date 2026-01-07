@@ -4,42 +4,73 @@ import requests
 import socket
 import ssl
 import time
+import base64
+import json
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from urllib.parse import urlparse, urljoin
 from validators import url as validate_url
+from datetime import datetime
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# إعدادات متقدمة لمحاكاة متصفح بشري كامل
+# إعدادات الرأس لمحاكاة متصفح بشري فائق الجودة
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Referer": "https://www.google.com/",
+    "Accept-Language": "ar,en-US;q=0.7,en;q=0.3",
+    "Referer": "https://www.google.com/"
 }
 
-def check_ssl_status(hostname):
+def get_domain_age(domain):
+    """
+    فحص عمر النطاق باستخدام خدمة RDAP (بديلة لـ WHOIS التقليدية لسرعتها)
+    المواقع الجديدة (أقل من 30 يوم) تعتبر شديدة الخطورة
+    """
     try:
-        context = ssl.create_default_context()
-        with socket.create_connection((hostname, 443), timeout=3) as sock:
-            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-                return True
+        # استخدام خدمة RDAP المجانية لجلب بيانات التسجيل
+        res = requests.get(f"https://rdap.org/domain/{domain}", timeout=5)
+        if res.status_code == 200:
+            data = res.json()
+            # البحث عن تاريخ الإنشاء في سجلات الأحداث
+            events = data.get('events', [])
+            for event in events:
+                if event.get('eventAction') == 'registration':
+                    reg_date_str = event.get('eventDate')
+                    # تحويل التاريخ وحساب الفرق بالأيام
+                    reg_date = datetime.strptime(reg_date_str[:10], "%Y-%m-%d")
+                    age_days = (datetime.now() - reg_date).days
+                    return age_days
     except:
-        return False
+        pass
+    return None
 
-def extract_external_scripts(html_content, base_url):
-    """استخراج محتوى ملفات الـ JavaScript الخارجية لفحصها"""
-    scripts = re.findall(r'<script src=["\'](.*?)["\']', html_content, re.I)
-    external_code = ""
-    for script_url in scripts[:3]: # فحص أول 3 ملفات لتجنب البطء
+def deobfuscate_logic(content):
+    """فك تشفير الأكواد المخفية لكشف الفخاخ البرمجية"""
+    findings = ""
+    # البحث عن سلاسل Base64 الطويلة (التي غالباً ما تخفي أكواد خبيثة)
+    potential_b64 = re.findall(r'["\']([A-Za-z0-9+/]{40,})={0,2}["\']', content)
+    for b in potential_b64:
         try:
-            full_url = urljoin(base_url, script_url)
-            res = requests.get(full_url, headers=HEADERS, timeout=5)
-            external_code += res.text
+            decoded = base64.b64decode(b).decode('utf-8', errors='ignore')
+            findings += " " + decoded
         except:
             continue
-    return external_code
+    return findings
 
-def perform_deep_analysis(target_url):
+def fetch_external_scripts(html, base_url):
+    """جلب وتحليل ملفات الـ JS المرتبطة بالموقع"""
+    scripts = re.findall(r'<script src=["\'](.*?)["\']', html, re.I)
+    js_code = ""
+    for s in scripts[:3]: # نكتفي بأول 3 ملفات لضمان سرعة الاستجابة
+        try:
+            full_url = urljoin(base_url, s)
+            r = requests.get(full_url, headers=HEADERS, timeout=4)
+            js_code += "\n" + r.text
+        except:
+            continue
+    return js_code
+
+def perform_ultimate_analysis(target_url):
     start_time = time.time()
     violated_rules = []
     redirect_path = [target_url]
@@ -47,77 +78,76 @@ def perform_deep_analysis(target_url):
     
     try:
         session = requests.Session()
+        # تتبع التحويلات بشكل كامل
         response = session.get(target_url, headers=HEADERS, timeout=12, allow_redirects=True)
         final_url = response.url
-        main_content = response.text 
+        main_html = response.text
         
-        # مطاردة الملفات الخارجية لجلب الكود المخفي
-        external_content = extract_external_scripts(main_content, final_url)
-        full_code_to_scan = main_content + external_content
-        
-        # 1. تتبع المسار الكامل
-        for resp in response.history:
-            if resp.url not in redirect_path:
-                redirect_path.append(resp.url)
-        if final_url not in redirect_path:
-            redirect_path.append(final_url)
+        # تجميع كل الأكواد (HTML + JS خارجي + فك تشفير)
+        full_code = main_html + fetch_external_scripts(main_html, final_url)
+        full_code += deobfuscate_logic(full_code)
 
-        # 2. رادار الخصوصية المتقدم (الكاميرا، الميكروفون، الموقع)
-        privacy_triggers = {
-            'Camera/Video': r'getUserMedia|mediaDevices|video|camera|webcam|snapshot|capture|stream',
-            'Microphone': r'AudioContext|createMediaStreamSource|microphone|record',
-            'Geolocation': r'getCurrentPosition|watchPosition|geolocation',
-            'Obfuscation': r'eval\(|unescape\(|atob\(|_0x[a-f0-9]+' # كشف التشفير
-        }
-        
-        found_triggers = []
-        for key, pattern in privacy_triggers.items():
-            if re.search(pattern, full_code_to_scan, re.I):
-                found_triggers.append(key)
-        
-        if found_triggers:
-            severity = 80 if 'Camera' in found_triggers or 'Geolocation' in found_triggers else 50
-            points += severity
-            violated_rules.append({
-                "name": "محاولة اختراق خصوصية متقدمة", 
-                "risk_description": f"تم رصد محاولة وصول للآتي: ({', '.join(found_triggers)}). الموقع يطلب أذونات حساسة برمجياً.", 
-                "points_added": severity
-            })
-
-        # 3. فحص "سحب البيانات" (Exfiltration)
-        exfiltration_patterns = [r'base64', r'FormData', r'binary', r'Buffer', r'arraybuffer', r'websocket', r'socket\.io']
-        if any(re.search(p, full_code_to_scan, re.I) for p in exfiltration_patterns) and found_triggers:
-            points += 20
-            violated_rules.append({
-                "name": "محرك سحب البيانات (Exfiltration)", 
-                "risk_description": "تم رصد تقنيات لتحويل الوسائط (صور/صوت) وإرسالها فوراً لخادم خارجي.", 
-                "points_added": 20
-            })
-
-        # 4. تحليل النطاق (Domain Intelligence)
+        # 1. تحليل عمر النطاق (Domain Age)
         domain = urlparse(final_url).netloc
-        if not final_url.startswith('https'):
-            points += 40
-            violated_rules.append({"name": "اتصال مكشوف", "risk_description": "الموقع لا يستخدم تشفير، أي بيانات تمر عبره قابلة للاختراق.", "points_added": 40})
-        
-        # كشف الروابط التي تحاول تقليد شركات كبرى
-        suspicious_keywords = r'google|facebook|login|secure|verify|update|account|billing|support'
-        if re.search(suspicious_keywords, domain, re.I):
-            points += 25
-            violated_rules.append({"name": "اشتباه انتحال صفحة (Phishing)", "risk_description": "اسم النطاق يحتوي على كلمات تستخدم عادةً لخداع المستخدمين.", "points_added": 25})
+        age = get_domain_age(domain)
+        if age is not None:
+            if age < 30: # موقع تم إنشاؤه في آخر شهر
+                points += 50
+                violated_rules.append({"name": "نطاق حديث جداً", "risk_description": f"هذا الموقع تم إنشاؤه منذ {age} يوم فقط. المواقع الجديدة هي البيئة المفضلة لهجمات التصيد.", "points_added": 50})
+            elif age < 180: # أقل من 6 شهور
+                points += 20
+                violated_rules.append({"name": "نطاق غير مستقر", "risk_description": "عمر الموقع أقل من 6 أشهر، مما يجعله تحت مجهر المراجعة الأمنية.", "points_added": 20})
 
-    except Exception as e:
+        # 2. كشف سلاسل التحويل (Redirect Chains)
+        if len(response.history) > 2:
+            points += 30
+            violated_rules.append({"name": "سلسلة تحويل مريبة", "risk_description": "تم رصد قفزات متعددة للرابط، وهو أسلوب يستخدم لتجاوز أنظمة الحماية.", "points_added": 30})
+        
+        for r in response.history:
+            if r.url not in redirect_path: redirect_path.append(r.url)
+        if final_url not in redirect_path: redirect_path.append(final_url)
+
+        # 3. رادار الأذونات المتقدم (Privacy & Exploit Detection)
+        threat_map = {
+            'Camera/Microphone': r'getUserMedia|mediaDevices|camera|video|microphone|record|capture',
+            'Location/GPS': r'getCurrentPosition|watchPosition|geolocation',
+            'Data Theft/Exfil': r'canvas\.toDataURL|atob\(|btoa\(|upload|POST|fetch|XMLHttpRequest',
+            'Phishing Forms': r'password|credit_card|cvv|exp_month|ssn|social_security|pin_code'
+        }
+
+        for category, pattern in threat_map.items():
+            if re.search(pattern, full_code, re.I):
+                p_added = 70 if 'Camera' in category or 'Phishing' in category else 40
+                points += p_added
+                violated_rules.append({
+                    "name": f"نشاط: {category}", 
+                    "risk_description": "تم رصد محاولة برمجية للوصول إلى أجهزة النظام أو بيانات حساسة.", 
+                    "points_added": p_added
+                })
+
+        # 4. تحليل النطاق وانتحال الصفة (Brand Protection)
+        brands = ['facebook', 'google', 'paypal', 'microsoft', 'apple', 'amazon', 'netflix', 'binance']
+        for b in brands:
+            if b in domain.lower() and domain.lower() != f"{b}.com":
+                points += 45
+                violated_rules.append({"name": "اشتباه انتحال علامة تجارية", "risk_description": f"اسم النطاق يحاول تقليد موقع {b} الرسمي بطريقة مضللة.", "points_added": 45})
+
+        if not final_url.startswith('https'):
+            points += 50
+            violated_rules.append({"name": "اتصال غير مشفر", "risk_description": "الموقع لا يستخدم بروتوكول HTTPS الآمن.", "points_added": 50})
+
+    except Exception:
         points += 30
-        violated_rules.append({"name": "فشل التحليل العميق", "risk_description": "الموقع محمي بجدران نارية تمنع الفحص، وهذا سلوك مريب جداً.", "points_added": 30})
+        violated_rules.append({"name": "فشل التحليل العميق", "risk_description": "الموقع يستخدم تقنيات متقدمة لحجب الفحص، وهو مؤشر خطر عالي.", "points_added": 30})
         final_url = target_url
 
-    # النتيجة النهائية (The Beast Mode Logic)
-    points = min(points, 100)
-    risk = "Critical" if points >= 75 else "High" if points >= 50 else "Medium" if points >= 25 else "Low"
+    # تصنيف الخطر النهائي
+    total_points = min(points, 100)
+    risk_level = "Critical" if total_points >= 80 else "High" if total_points >= 50 else "Medium" if total_points >= 25 else "Low"
 
     return {
-        "risk_score": risk,
-        "suspicious_points": points,
+        "risk_score": risk_level,
+        "suspicious_points": total_points,
         "violated_rules": violated_rules,
         "link_final": final_url,
         "redirect_path": redirect_path,
@@ -129,12 +159,11 @@ def home(): return render_template('index.html')
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    data = request.json
-    url = data.get('link', '').strip()
-    if not url: return jsonify({"message": "أدخل الرابط"}), 400
+    url = request.json.get('link', '').strip()
+    if not url: return jsonify({"message": "يرجى إدخال الرابط"}), 400
     if not url.startswith('http'): url = 'https://' + url
-    if not validate_url(url): return jsonify({"message": "رابط خاطئ"}), 400
-    return jsonify(perform_deep_analysis(url))
+    if not validate_url(url): return jsonify({"message": "الرابط غير صالح"}), 400
+    return jsonify(perform_ultimate_analysis(url))
 
 @app.route('/robots.txt')
 def robots(): return send_from_directory(app.static_folder, 'robots.txt')
