@@ -6,18 +6,18 @@ import ssl
 import time
 from flask import Flask, request, jsonify, render_template
 from urllib.parse import urlparse
-from validators import url
+from validators import url as validate_url
 
 app = Flask(__name__)
 
-# إعدادات الاتصال الاحترافية لتبدو كمتصفح حقيقي
+# إعدادات الرأس لمحاكاة متصفح حقيقي وتجنب الحظر
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
     "Accept-Language": "en-US,en;q=0.9,ar;q=0.8",
 }
 
 def check_ssl_status(hostname):
-    """فحص جودة وصلاحية شهادة SSL عبر السوكت"""
+    """فحص عميق لصحة شهادة SSL عبر الـ Sockets"""
     try:
         context = ssl.create_default_context()
         with socket.create_connection((hostname, 443), timeout=3) as sock:
@@ -32,49 +32,42 @@ def perform_deep_analysis(target_url):
     redirect_path = [target_url]
     points = 0
     
-    # --- 1. تتبع المسار وفحص الاتصال (Dynamic Analysis) ---
+    # --- 1. التحليل الديناميكي وتتبع التحويلات ---
     try:
-        response = requests.get(target_url, headers=HEADERS, timeout=8, allow_redirects=True)
+        response = requests.get(target_url, headers=HEADERS, timeout=10, allow_redirects=True)
         final_url = response.url
         content = response.text
         
-        # تسجيل مسار التحويلات (Redirect History)
+        # تتبع مسار الروابط بالكامل (Redirect Map)
         for resp in response.history:
             if resp.url not in redirect_path:
                 redirect_path.append(resp.url)
         if final_url not in redirect_path:
             redirect_path.append(final_url)
 
-        # فحص البروتوكول والـ SSL
+        # فحص بروتوكول التشفير
         if not final_url.startswith('https'):
             points += 45
-            violated_rules.append({"name": "اتصال غير مشفر (HTTP)", "risk_description": "الموقع يرسل البيانات بدون تشفير، مما يسهل اختراق الجلسة.", "points_added": 45})
+            violated_rules.append({"name": "اتصال غير مشفر (HTTP)", "risk_description": "الموقع لا يستخدم بروتوكول HTTPS، مما يعرض بياناتك لخطر التنصت.", "points_added": 45})
         else:
             is_valid, msg = check_ssl_status(urlparse(final_url).netloc)
             if not is_valid:
                 points += 35
-                violated_rules.append({"name": "مشكلة في شهادة الأمان", "risk_description": "شهادة الـ SSL منتهية أو غير موثقة من جهة رسمية.", "points_added": 35})
-
-        # فحص عدد التحويلات
-        if len(response.history) > 2:
-            points += 20
-            violated_rules.append({"name": "سلسلة تحويلات مريبة", "risk_description": "الرابط يحاول إخفاء وجهته النهائية عبر القفز بين عدة مواقع.", "points_added": 20})
+                violated_rules.append({"name": "خلل في شهادة SSL", "risk_description": "شهادة الأمان غير صالحة أو غير موثقة، مما يضعف الثقة في الموقع.", "points_added": 35})
 
     except Exception:
         points += 30
-        violated_rules.append({"name": "فشل فحص الاستجابة", "risk_description": "الموقع يحظر أدوات الفحص أو الخادم غير موجود.", "points_added": 30})
+        violated_rules.append({"name": "تعذر الوصول للموقع", "risk_description": "الموقع لا يستجيب أو يحظر أدوات الفحص التلقائية.", "points_added": 30})
         final_url = target_url
         content = ""
 
-    # --- 2. فحص الهيكل والمحتوى (Static Analysis) ---
+    # --- 2. التحليل الساكن (Static Regex Analysis) ---
     parsed = urlparse(final_url)
-    
-    # قواعد Regex متقدمة
     static_rules = [
-        (r'@', 50, "تزوير العناوين (@)", "يستخدم لإخفاء النطاق الحقيقي خلف اسم مستخدم وهمي."),
-        (r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', 60, "عنوان IP مباشر", "المواقع الموثوقة تستخدم أسماء وليس أرقام IP مباشرة."),
-        (r'(login|verify|update|secure|bank|paypal|account|gift)', 25, "كلمات هندسة اجتماعية", "الرابط يحتوي على كلمات تهدف لخداعك نفسياً."),
-        (r'\.zip$|\.exe$|\.rar$|\.apk$|\.bat$', 85, "تحميل برمجية تنفيذية", "الرابط سيقوم بتحميل ملف قد يضر بجهازك فوراً.")
+        (r'@', 50, "استخدام رمز @ المريب", "يستخدم المخترقون هذا الرمز لتضليل المستخدمين وإخفاء النطاق الحقيقي."),
+        (r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', 60, "عنوان IP مباشر", "استخدام الأرقام بدلاً من الأسماء هو سلوك كلاسيكي في مواقع التصيد."),
+        (r'(login|verify|update|secure|bank|paypal|account|gift|bonus)', 30, "كلمات هندسة اجتماعية", "الرابط يحتوي على كلمات تهدف للتلاعب بمشاعر المستخدم واستعجاله."),
+        (r'\.zip$|\.exe$|\.rar$|\.apk$|\.bat$', 90, "رابط تحميل مباشر لملف", "هذا الرابط سيقوم بتحميل ملف قد يحتوي على برمجيات ضارة فور النقر.")
     ]
 
     for pattern, pts, name, desc in static_rules:
@@ -84,9 +77,9 @@ def perform_deep_analysis(target_url):
 
     if content and re.search(r'<input[^>]*type="password"', content, re.I):
         points += 50
-        violated_rules.append({"name": "طلب بيانات حساسة", "risk_description": "الصفحة تحتوي على حقل إدخال كلمة مرور بشكل غير آمن.", "points_added": 50})
+        violated_rules.append({"name": "طلب كلمة مرور", "risk_description": "تم رصد نموذج إدخال كلمة مرور في موقع مشبوه يطلب بيانات حساسة.", "points_added": 50})
 
-    # --- 3. التصنيف النهائي ---
+    # التصنيف النهائي للمخاطر
     risk = "Critical" if points >= 80 else "High" if points >= 45 else "Medium" if points >= 20 else "Low"
 
     return {
@@ -96,7 +89,6 @@ def perform_deep_analysis(target_url):
         "link_input": target_url,
         "link_final": final_url,
         "redirect_path": redirect_path,
-        "detected_warnings": len(violated_rules),
         "execution_time": round(time.time() - start_time, 2)
     }
 
@@ -109,14 +101,16 @@ def analyze():
     data = request.json
     raw_url = data.get('link', '').strip()
     if not raw_url:
-        return jsonify({"message": "يرجى إدخال رابط"}), 400
+        return jsonify({"message": "يرجى إدخال الرابط أولاً"}), 400
+    
     if not raw_url.startswith(('http://', 'https://')):
         raw_url = 'https://' + raw_url
     
-    if not url(raw_url):
+    if not validate_url(raw_url):
         return jsonify({"message": "تنسيق الرابط غير صحيح"}), 400
         
     return jsonify(perform_deep_analysis(raw_url))
 
 if __name__ == '__main__':
     app.run(debug=True)
+
