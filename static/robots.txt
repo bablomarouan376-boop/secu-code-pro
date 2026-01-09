@@ -1,10 +1,9 @@
-SecuCode Pro - Robots.txt
-Last Updated: 2026-01-09
-Developed by: Tarek Mostafa
+SecuCode Pro - Robots Configuration
+Developed by Tarek Mostafa
 User-agent: *
 Allow: /
 Allow: /static/
 Disallow: /analyze
 Disallow: /private/
-Link to the updated sitemap
+سحب الخريطة المحدثة
 Sitemap: https://www.google.com/search?q=https://secu-code-pro.vercel.app/sitemap.xml
