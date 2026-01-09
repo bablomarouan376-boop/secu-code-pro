@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created by SecuCode Pro Engine - Developed by Tarek Mostafa -->
 <urlset xmlns="[تم إزالة الرابط المشبوه]">
-<!-- الصفحة الرئيسية للمشروع -->
 <url>
-    <loc>https://secu-code-pro.vercel.app/</loc>
-    <lastmod>2026-01-09</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+<loc>https://secu-code-pro.vercel.app/</loc>
+<lastmod>2026-01-09</lastmod>
+<changefreq>daily</changefreq>
+<priority>1.0</priority>
 </url>
-
-<!-- يمكنك إضافة صفحات إضافية هنا مستقبلاً بنفس التنسيق -->
-
 </urlset>
