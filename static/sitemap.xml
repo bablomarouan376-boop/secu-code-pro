@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created by SecuCode Pro Engine - Tarek Mostafa -->
-<urlset xmlns="[تم إزالة الرابط المشبوه]"
-xmlns:xsi="https://www.google.com/search?q=http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="[تم إزالة الرابط المشبوه]
-[تم إزالة الرابط المشبوه]">
-<!-- الصفحة الرئيسية للموقع -->
+<!-- Created by SecuCode Pro Engine - Developed by Tarek Mostafa -->
+<urlset xmlns="[تم إزالة الرابط المشبوه]">
+<!-- الصفحة الرئيسية للمشروع -->
 <url>
     <loc>https://secu-code-pro.vercel.app/</loc>
     <lastmod>2026-01-09</lastmod>
@@ -12,6 +9,6 @@ xsi:schemaLocation="[تم إزالة الرابط المشبوه]
     <priority>1.0</priority>
 </url>
 
-<!-- في حالة إضافة صفحات مستقبلية مثل "عن المطور" أو "الخصوصية" يمكن إضافتها هنا -->
+<!-- يمكنك إضافة صفحات إضافية هنا مستقبلاً بنفس التنسيق -->
 
 </urlset>
