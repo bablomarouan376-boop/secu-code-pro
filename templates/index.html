@@ -3,9 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecuCode Pro | أداة فحص الروابط والتحليل السلوكي المتقدم</title>
-    <meta name="description" content="افحص الروابط المشبوهة مجاناً مع SecuCode Pro. نظام تحليل متقدم للكشف عن البرمجيات الخبيثة والتحويلات الاحتيالية.">
     
+    <!-- تحسينات محركات البحث - SEO -->
+    <title>SecuCode Pro | أداة فحص الروابط والتحليل السلوكي المتقدم</title>
+    <meta name="description" content="افحص الروابط المشبوهة مجاناً مع SecuCode Pro. نظام تحليل متقدم للكشف عن البرمجيات الخبيثة والتحويلات الاحتيالية وحماية خصوصيتك الرقمية.">
+    <meta name="keywords" content="فحص روابط, أمن سيبراني, كشف الاحتيال, تحليل الروابط, SecuCode Pro, فحص فيروسات الروابط, حماية المواقع">
+    <meta name="author" content="Tarek Mostafa">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook (لتحسين شكل الرابط عند المشاركة) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://secu-code-pro.vercel.app/">
+    <meta property="og:title" content="SecuCode Pro | درعك لحماية الروابط">
+    <meta property="og:description" content="حلل الروابط واكشف التهديدات الخفية مجاناً مع تقنيات الفحص السلوكي المتقدمة.">
+    <meta property="og:image" content="https://secu-code-pro.vercel.app/static/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://secu-code-pro.vercel.app/">
+    <meta property="twitter:title" content="SecuCode Pro | درعك لحماية الروابط">
+    <meta property="twitter:description" content="حلل الروابط واكشف التهديدات الخفية مجاناً مع تقنيات الفحص السلوكي المتقدمة.">
+
+    <!-- الروابط الخارجية -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -19,7 +38,6 @@
             scroll-behavior: smooth;
         }
         
-        /* تحسينات للعرض على الجوال */
         @media (max-width: 640px) {
             h1 { font-size: 2.5rem !important; }
             .glass { padding: 1.25rem !important; }
@@ -37,7 +55,6 @@
             border-color: var(--primary);
         }
 
-        /* أنيميشن التحميل */
         .loader {
             width: 20px; height: 20px;
             border: 3px solid rgba(255,255,255,0.3);
@@ -156,7 +173,8 @@
                 const data = await res.json();
                 renderResults(data);
             } catch (e) {
-                alert("حدث خطأ في الاتصال بالسيرفر");
+                console.error("Error during scan:", e);
+                // استخدام رسالة مخصصة داخل الواجهة بدلاً من alert
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span>ابدأ الفحص</span> <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
@@ -177,7 +195,6 @@
 
             const status = config[data.risk_score] || { color: '#64748b', label: 'غير محدد', desc: 'لم نتمكن من الوصول لنتيجة قطعية.' };
 
-            // تحديث الواجهة
             document.getElementById('statusCard').style.borderColor = status.color;
             document.getElementById('riskStatus').textContent = status.label;
             document.getElementById('riskStatus').style.color = status.color;
@@ -185,13 +202,11 @@
             document.getElementById('riskScore').textContent = data.points;
             document.getElementById('redirectCount').textContent = data.redirects.length;
 
-            // تحريك الدائرة
             const circle = document.getElementById('scoreCircle');
             const offset = 364.4 - (data.points / 100) * 364.4;
             circle.style.strokeDashoffset = offset;
             circle.style.color = status.color;
 
-            // عرض المسار
             document.getElementById('redirectPath').innerHTML = data.redirects.map((url, i) => `
                 <div class="glass p-4 text-xs flex items-center gap-3 hover:bg-slate-800/50 transition-colors">
                     <span class="w-6 h-6 flex items-center justify-center bg-blue-500 rounded text-white font-bold">${i+1}</span>
@@ -199,7 +214,6 @@
                 </div>
             `).join('');
 
-            // عرض الانتهاكات
             const vDiv = document.getElementById('violations');
             if(data.violations.length > 0) {
                 vDiv.innerHTML = data.violations.map(v => `
@@ -218,3 +232,4 @@
     </script>
 </body>
 </html>
+
