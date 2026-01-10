@@ -11,7 +11,11 @@
     <meta name="author" content="Tarek Mostafa">
     <meta name="robots" content="index, follow">
 
-    <!-- Open Graph / Facebook (لتحسين شكل الرابط عند المشاركة) -->
+    <!-- ربط ملف الـ Manifest الجديد -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://secu-code-pro.vercel.app/">
     <meta property="og:title" content="SecuCode Pro | درعك لحماية الروابط">
@@ -174,7 +178,6 @@
                 renderResults(data);
             } catch (e) {
                 console.error("Error during scan:", e);
-                // استخدام رسالة مخصصة داخل الواجهة بدلاً من alert
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span>ابدأ الفحص</span> <i data-lucide="arrow-left" class="w-5 h-5"></i>`;
