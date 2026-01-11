@@ -10,5 +10,5 @@ Disallow: /__pycache__/
 Disallow: /.env
 Disallow: /venv/
 
-# توجيه جوجل مباشرة لخريطة الموقع المصلحة
-Sitemap: https://secu-code-pro.vercel.app/static/sitemap.xml
+# المسار المباشر لخدمة خريطة الموقع
+Sitemap: https://secu-code-pro.vercel.app/sitemap.xml
