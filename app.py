@@ -8,7 +8,7 @@ from validators import url as validate_url
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# --- مسارات ملفات الأرشفة و PWA ---
+# --- مسارات الأرشفة و PWA (الحل الجذري لخطأ 404) ---
 @app.route('/sitemap.xml')
 def sitemap():
     response = make_response(send_from_directory(app.static_folder, 'sitemap.xml'))
@@ -23,7 +23,7 @@ def robots():
 def manifest():
     return send_from_directory(app.static_folder, 'manifest.json')
 
-# --- محرك الفحص الأمني (النسخة الاحترافية) ---
+# --- المحرك الأمني المحسن لـ SecuCode Pro ---
 SENSITIVE_PATTERNS = {
     "Credential Harvesting": r'(?i)(password|passwd|signin|login|credential|verification)',
     "Browser Exploitation": r'(?i)(eval\(|unescape\(|document\.write\(|setTimeout\(|setInterval\()',
@@ -31,11 +31,7 @@ SENSITIVE_PATTERNS = {
     "Privacy Violation": r'(?i)(navigator\.mediaDevices|getUserMedia|geolocation|cookie|localStorage)'
 }
 
-WHITELIST = ['google.com', 'facebook.com', 'vercel.app', 'github.com', 'microsoft.com', 'apple.com']
-
-def is_trusted(url):
-    domain = urlparse(url).netloc.lower().replace('www.', '')
-    return any(domain == d or domain.endswith('.' + d) for d in WHITELIST)
+WHITELIST = ['google.com', 'facebook.com', 'vercel.app', 'github.com', 'microsoft.com']
 
 def perform_deep_scan(url):
     start_time = time.time()
@@ -45,22 +41,22 @@ def perform_deep_scan(url):
         response = session.get(url, timeout=7, headers={"User-Agent": "Mozilla/5.0 SecuCode/2.0"}, allow_redirects=True)
         final_url = response.url
         
-        if is_trusted(final_url): 
+        domain = urlparse(final_url).netloc.lower().replace('www.', '')
+        if any(domain == d or domain.endswith('.' + d) for d in WHITELIST):
             return {"risk_score": "Safe", "points": 5, "analysis_time": 0.1, "violations": []}
 
         full_payload = response.text.lower()
         if not final_url.startswith('https'):
             results["points"] += 45
-            results["violations"].append({"name": "اتصال غير مشفر", "desc": "الموقع لا يستخدم بروتوكول HTTPS."})
+            results["violations"].append({"name": "No SSL", "desc": "اتصال غير مشفر."})
 
         for threat, pattern in SENSITIVE_PATTERNS.items():
             if re.search(pattern, full_payload):
                 results["points"] += 25
-                results["violations"].append({"name": threat, "desc": "تم رصد أكواد برمجية مشبوهة."})
+                results["violations"].append({"name": threat, "desc": "رصد كود مشبوه."})
 
     except:
-        results["risk_score"] = "Unknown"
-        results["violations"].append({"name": "فشل الفحص", "desc": "الموقع قد يحظر أدوات التحليل الآلي."})
+        results["risk_score"] = "Error"
     
     score = min(results["points"], 100)
     results["points"] = score
@@ -77,7 +73,7 @@ def analyze():
     data = request.json or {}
     url = data.get('link', '').strip()
     if not url.startswith('http'): url = 'https://' + url
-    if not validate_url(url): return jsonify({"error": "الرابط غير صالح"}), 400
+    if not validate_url(url): return jsonify({"error": "رابط غير صالح"}), 400
     return jsonify(perform_deep_scan(url))
 
 if __name__ == '__main__':
