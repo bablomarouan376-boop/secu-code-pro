@@ -8,61 +8,73 @@ from validators import url as validate_url
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# --- مسارات الأرشفة و PWA (الحل الجذري لخطأ 404) ---
-@app.route('/sitemap.xml')
-def sitemap():
-    response = make_response(send_from_directory(app.static_folder, 'sitemap.xml'))
-    response.headers['Content-Type'] = 'application/xml'
-    return response
+# --- نظام تخطي شروط الربط وتقديم الملفات (PWA & SEO) ---
+@app.route('/manifest.json')
+def manifest():
+    """تخطي مشاكل الربط بتقديم المانيفست مباشرة"""
+    return send_from_directory(app.static_folder, 'manifest.json')
 
 @app.route('/robots.txt')
 def robots():
     return send_from_directory(app.static_folder, 'robots.txt')
 
-@app.route('/manifest.json')
-def manifest():
-    return send_from_directory(app.static_folder, 'manifest.json')
+# --- محرك الذكاء الأمني المطور (The Core Engine) ---
 
-# --- المحرك الأمني المحسن لـ SecuCode Pro ---
-SENSITIVE_PATTERNS = {
-    "Credential Harvesting": r'(?i)(password|passwd|signin|login|credential|verification)',
-    "Browser Exploitation": r'(?i)(eval\(|unescape\(|document\.write\(|setTimeout\(|setInterval\()',
-    "Data Exfiltration": r'(?i)(XMLHttpRequest|fetch|ajax|\.post\(|\.get\()',
-    "Privacy Violation": r'(?i)(navigator\.mediaDevices|getUserMedia|geolocation|cookie|localStorage)'
+# أنماط متقدمة جداً لكشف الاختراق وسرقة البيانات
+ADVANCED_PATTERNS = {
+    "Stealth Phishing": r'(?i)(secure-login|verify-account|update-billing|auth-check)',
+    "JS-Malware": r'(?i)(atob\(|btoa\(|String\.fromCharCode|String\.raw|Buffer\.from)',
+    "Session Hijacking": r'(?i)(document\.cookie|sessionStorage|indexedDB|bearer\s)',
+    "UI Redressing": r'(?i)(iframe|opacity:\s?0|pointer-events:\s?none)',
+    "Keylogging Pattern": r'(?i)(addEventListener\("keydown"|onkeypress|input\.value)'
 }
 
-WHITELIST = ['google.com', 'facebook.com', 'vercel.app', 'github.com', 'microsoft.com']
-
-def perform_deep_scan(url):
+def perform_ultra_scan(url):
+    """فحص فائق السرعة والدقة يتخطى قيود المواقع"""
     start_time = time.time()
-    results = {"risk_score": "Low", "points": 0, "violations": [], "analysis_time": 0}
-    try:
-        session = requests.Session()
-        response = session.get(url, timeout=7, headers={"User-Agent": "Mozilla/5.0 SecuCode/2.0"}, allow_redirects=True)
-        final_url = response.url
-        
-        domain = urlparse(final_url).netloc.lower().replace('www.', '')
-        if any(domain == d or domain.endswith('.' + d) for d in WHITELIST):
-            return {"risk_score": "Safe", "points": 5, "analysis_time": 0.1, "violations": []}
-
-        full_payload = response.text.lower()
-        if not final_url.startswith('https'):
-            results["points"] += 45
-            results["violations"].append({"name": "No SSL", "desc": "اتصال غير مشفر."})
-
-        for threat, pattern in SENSITIVE_PATTERNS.items():
-            if re.search(pattern, full_payload):
-                results["points"] += 25
-                results["violations"].append({"name": threat, "desc": "رصد كود مشبوه."})
-
-    except:
-        results["risk_score"] = "Error"
+    results = {"risk_score": "Safe", "points": 0, "details": [], "analysis_time": 0}
     
+    try:
+        # استخدام نظام محاكاة المتصفحات البشرية لتجنب الحظر
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9,ar;q=0.8"
+        }
+        
+        response = requests.get(url, timeout=10, headers=headers, allow_redirects=True)
+        content = response.text.lower()
+        
+        # 1. فحص تشفير الدومين
+        if not response.url.startswith('https'):
+            results["points"] += 50
+            results["details"].append("اتصال غير مشفر (Insecure SSL)")
+
+        # 2. تحليل الكود البرمجي (Heuristic Scan)
+        for threat, pattern in ADVANCED_PATTERNS.items():
+            if re.search(pattern, content):
+                results["points"] += 30
+                results["details"].append(f"سلوك مريب: {threat}")
+
+        # 3. فحص الروابط المخفية (Hidden Redirects)
+        if len(response.history) > 3:
+            results["points"] += 20
+            results["details"].append("تحويلات متعددة مشبوهة")
+
+    except Exception as e:
+        results["risk_score"] = "Blocked"
+        results["details"].append("الموقع يرفض الفحص أو غير متاح")
+
+    # تحديد التقييم النهائي
     score = min(results["points"], 100)
     results["points"] = score
-    results["risk_score"] = "Critical" if score >= 80 else "High" if score >= 50 else "Medium" if score >= 25 else "Low"
+    if score >= 75: results["risk_score"] = "Dangerous"
+    elif score >= 40: results["risk_score"] = "Suspicious"
+    else: results["risk_score"] = "Verified Safe"
+    
     results["analysis_time"] = round(time.time() - start_time, 2)
     return results
+
+# --- المسارات الذكية ---
 
 @app.route('/')
 def index():
@@ -72,9 +84,12 @@ def index():
 def analyze():
     data = request.json or {}
     url = data.get('link', '').strip()
+    
+    if not url: return jsonify({"error": "Missing URL"}), 400
     if not url.startswith('http'): url = 'https://' + url
-    if not validate_url(url): return jsonify({"error": "رابط غير صالح"}), 400
-    return jsonify(perform_deep_scan(url))
+    if not validate_url(url): return jsonify({"error": "Invalid URL format"}), 400
+        
+    return jsonify(perform_ultra_scan(url))
 
 if __name__ == '__main__':
     app.run(debug=True)
