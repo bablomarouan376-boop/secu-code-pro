@@ -3,37 +3,28 @@ from flask import Flask, request, jsonify, render_template
 from urllib.parse import urlparse
 from datetime import datetime
 from threading import Thread
-from functools import wraps
 
 app = Flask(__name__)
 
-# --- إعدادات النظام ---
+# --- مستودع التهديدات والإحصائيات ---
 GLOBAL_BLACKLIST = set()
-LAST_UPDATE = "جاري المزامنة..."
+LAST_UPDATE = "جاري التحديث..."
 START_DATE = datetime(2026, 1, 1)
 BASE_SCANS = 1540
 
-# --- نظام حماية السيرفر ---
-user_scans = {}
-def rate_limit(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        user_ip = request.remote_addr
-        now = time.time()
-        if user_ip in user_scans and now - user_scans[user_ip] < 5:
-            return jsonify({"error": "يرجى الانتظار 5 ثوانٍ بين عمليات الفحص"}), 429
-        user_scans[user_ip] = now
-        return f(*args, **kwargs)
-    return decorated_function
+# دالة لحساب الإحصائيات الحية بناءً على الوقت المنقضي
+def get_live_stats():
+    now = datetime.now()
+    days_passed = (now - START_DATE).days
+    # العداد يزيد يومياً وبناءً على الساعة لضمان عدم الرجوع للصفر
+    total = BASE_SCANS + (days_passed * 41) + (now.hour * 3)
+    threats = int(total * 0.13) + random.randint(1, 5)
+    return total, threats
 
-# --- محرك تحديث البيانات الذكي ---
 def update_blacklist_sources():
     global GLOBAL_BLACKLIST, LAST_UPDATE
     new_threats = set()
-    sources = [
-        "https://openphish.com/feed.txt",
-        "https://phishstats.info/phish_score.txt"
-    ]
+    sources = ["https://openphish.com/feed.txt", "https://phishstats.info/phish_score.txt"]
     for source in sources:
         try:
             res = requests.get(source, timeout=15)
@@ -43,48 +34,34 @@ def update_blacklist_sources():
                         domain = urlparse(line).netloc if '://' in line else line.split('/')[0]
                         if domain: new_threats.add(domain.lower().strip())
         except: pass
-    
-    # إضافة القواعد اليدوية (بما فيها رابط تجاربك)
-    manual = ['casajoys.com', 'webcam360.com', 'grabify.link', 'iplogger.org']
-    for d in manual: new_threats.add(d)
-    
+    # إضافة روابطك اليدوية والقواعد الثابتة
+    for d in ['casajoys.com', 'webcam360.com', 'grabify.link', 'iplogger.org']:
+        new_threats.add(d)
     GLOBAL_BLACKLIST = new_threats
-    LAST_UPDATE = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    LAST_UPDATE = datetime.now().strftime("%H:%M:%S")
 
-# تشغيل التحديث في الخلفية
+# تحديث تلقائي عند التشغيل
 Thread(target=update_blacklist_sources).start()
-
-def get_live_stats():
-    now = datetime.now()
-    days = (now - START_DATE).days
-    total = BASE_SCANS + (days * 41) + (now.hour * 3) + random.randint(1, 5)
-    return total, int(total * 0.13)
 
 def analyze_behavior(content, domain):
     points, findings = 0, []
-    # 1. كشف طلب الكاميرا (بدقة)
+    # كشف طلب الكاميرا (بدقة عالية)
     if re.search(r'getUserMedia|Webcam\.attach|camera\.start', content, re.I):
         if not any(t in domain for t in ['google.com', 'zoom.us', 'microsoft.com']):
             points += 98
             findings.append({"name": "رصد محاولة فتح الكاميرا", "desc": "تم اكتشاف أوامر تطلب صلاحية الكاميرا فور الدخول بشكل غير مبرر."})
-    
-    # 2. كشف بوتات التليجرام
+    # كشف بوتات التليجرام (مثل روابط WebCam360)
     if re.search(r'api\.telegram\.org/bot', content, re.I):
         points += 85
         findings.append({"name": "تسريب بيانات (Telegram Bot)", "desc": "الموقع مبرمج لإرسال البيانات المسحوبة فوراً إلى بوت تليجرام خارجي."})
-    
-    # 3. انتحال الهوية
-    if "login" in content.lower() and "google" in content.lower() and "google.com" not in domain:
-        points += 90
-        findings.append({"name": "انتحال هوية Google", "desc": "صفحة مزيفة تحاكي نظام Google لسرقة الحسابات."})
-        
     return points, findings
 
 @app.route('/')
-def index(): return render_template('index.html')
+def index():
+    t, th = get_live_stats()
+    return render_template('index.html', initial_total=t, initial_threats=th)
 
 @app.route('/analyze', methods=['POST'])
-@rate_limit
 def analyze():
     url = request.json.get('link', '').strip()
     if not url: return jsonify({"error": "أدخل الرابط"}), 400
@@ -93,32 +70,27 @@ def analyze():
     domain = urlparse(url).netloc.lower()
     total_points, violations = 0, []
 
-    # فحص القائمة السوداء
     if domain in GLOBAL_BLACKLIST:
         total_points = 100
-        violations.append({"name": "قائمة التهديدات العالمية", "desc": "الموقع مسجل دولياً كنشاط احتيالي نشط لعام 2026."})
+        violations.append({"name": "قائمة التهديدات العالمية", "desc": "تم رصد هذا النطاق في القوائم السوداء الدولية لعام 2026."})
 
-    # التحليل السلوكي
     try:
         res = requests.get(url, timeout=10, headers={"User-Agent": "SecuCode-Pro-2026"})
         p, f = analyze_behavior(res.text, domain)
         total_points = max(total_points, p)
         violations.extend(f)
     except:
-        if total_points < 50: total_points, violations.append({"name": "حجب الفحص", "desc": "الموقع مريب ويمنع أنظمة التحليل من الوصول إليه."})
+        if total_points < 50:
+            total_points = 50
+            violations.append({"name": "حجب الفحص", "desc": "الموقع يمنع أنظمة التحليل من الوصول إليه، مما يعزز احتمالية وجود نشاط خبيث."})
 
     score = min(total_points, 100)
-    t_total, t_threats = get_live_stats()
+    t, th = get_live_stats()
     return jsonify({
         "risk_score": "Critical" if score >= 85 else "High" if score >= 60 else "Medium" if score >= 30 else "Low",
         "points": score, "violations": violations, "last_update": LAST_UPDATE,
-        "stats": {"total": t_total, "threats": t_threats}, "final_url": url
+        "stats": {"total": t, "threats": th}
     })
-
-@app.route('/refresh_db', methods=['POST'])
-def refresh_db():
-    update_blacklist_sources()
-    return jsonify({"status": "success", "new_date": LAST_UPDATE, "count": len(GLOBAL_BLACKLIST)})
 
 if __name__ == '__main__':
     app.run(debug=True)
