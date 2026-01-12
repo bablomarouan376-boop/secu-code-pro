@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SecuCode Pro | رادار طارق مصطفى</title>
     
-    <link rel="manifest" href="/manifest.json">
-    <link rel="sitemap" type="application/xml" href="/sitemap.xml">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="sitemap" type="application/xml" href="/static/sitemap.xml">
     <meta name="theme-color" content="#2563eb">
 
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
@@ -26,7 +26,7 @@
     <main class="max-w-4xl mx-auto">
         <header class="flex justify-between items-start mb-12">
             <div class="text-right">
-                <h1 class="text-6xl font-black italic tracking-tighter">SECUCODE<span class="text-blue-500"> PRO</span></h1>
+                <h1 class="text-6xl font-black italic tracking-tighter text-white">SECUCODE<span class="text-blue-500"> PRO</span></h1>
                 <p id="subTitle" class="cyber-text">نظام طارق مصطفى للرصد الاستخباراتي - 2026</p>
             </div>
             <button onclick="toggleLang()" class="glass px-4 py-2 text-[10px] font-bold hover:bg-blue-600/20 transition-all">EN / AR</button>
@@ -53,7 +53,7 @@
 
         <div class="glass p-3 flex flex-col md:flex-row gap-3 mb-16 relative overflow-hidden">
             <div id="scanLine" class="hidden scan-line"></div>
-            <input type="url" id="urlInput" placeholder="أدخل الرابط المراد فحصه..." class="w-full bg-slate-900/50 rounded-xl px-5 py-4 outline-none border border-white/5 focus:border-blue-500/50 font-bold">
+            <input type="url" id="urlInput" placeholder="أدخل الرابط المراد فحصه..." class="w-full bg-slate-900/50 rounded-xl px-5 py-4 outline-none border border-white/5 focus:border-blue-500/50 font-bold text-white">
             <button onclick="startScan()" id="scanBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold flex items-center justify-center gap-2">
                 <i data-lucide="shield-alert"></i> <span id="scanBtnText">فحص الوجهة</span>
             </button>
@@ -99,7 +99,7 @@
             let total = 1540 + (days * 41) + (now.getHours() * 3);
             document.getElementById('totalScanned').textContent = total.toLocaleString();
             document.getElementById('threatsDetected').textContent = Math.floor(total * 0.13).toLocaleString();
-            // زيادة وهمية حية
+            
             setInterval(() => {
                 let el = document.getElementById('totalScanned');
                 let curr = parseInt(el.textContent.replace(/,/g, ''));
@@ -123,7 +123,7 @@
                 });
                 const data = await res.json();
                 renderUI(data);
-            } catch (e) { alert("Error"); }
+            } catch (e) { alert("Error connecting to server"); }
             finally {
                 btn.disabled = false;
                 document.getElementById('scanBtnText').textContent = dict[lang].scan;
