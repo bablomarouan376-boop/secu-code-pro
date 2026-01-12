@@ -1,0 +1,32 @@
+{
+  "name": "SecuCode Pro | Tarek Mostafa",
+  "short_name": "SecuCode",
+  "description": "نظام طارق مصطفى المتطور لفحص أمان الروابط والتحليل الأمني الذكي.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://img.freepik.com/premium-vector/low-poly-shield-with-checkmark-cybersecurity-concept-digital-protection-blue-geometric-3d-design_145776-164385.jpg",
+      "sizes": "192x192",
+      "type": "image/jpg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://img.freepik.com/premium-vector/low-poly-shield-with-checkmark-cybersecurity-concept-digital-protection-blue-geometric-3d-design_145776-164385.jpg",
+      "sizes": "512x512",
+      "type": "image/jpg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["security", "utilities"],
+  "screenshots": [
+    {
+      "src": "https://img.freepik.com/premium-vector/low-poly-shield-with-checkmark-cybersecurity-concept-digital-protection-blue-geometric-3d-design_145776-164385.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpg"
+    }
+  ]
+}
