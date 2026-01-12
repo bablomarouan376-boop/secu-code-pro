@@ -5,10 +5,10 @@ User-agent: *
 Allow: /
 Allow: /static/
 
-# منع العناكب من الدخول لملفات النظام لزيادة الأمان
+# منع العناكب من الدخول لملفات النظام
 Disallow: /__pycache__/
 Disallow: /.env
 Disallow: /venv/
 
-# المسار المباشر لخدمة خريطة الموقع
-Sitemap: https://secu-code-pro.vercel.app/sitemap.xml
+# المسار الصحيح والمباشر للخريطة
+Sitemap: https://secu-code-pro.vercel.app/static/sitemap.xml
