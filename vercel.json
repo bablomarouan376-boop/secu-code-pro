@@ -7,10 +7,9 @@
     }
   ],
   "routes": [
-    { "src": "/robots.txt", "continue": true },
-    { "src": "/sitemap.xml", "continue": true },
-    { "src": "/manifest.json", "continue": true },
-    { "handle": "filesystem" },
+    { "src": "/robots.txt", "dest": "/robots.txt" },
+    { "src": "/sitemap.xml", "dest": "/sitemap.xml" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
     { "src": "/(.*)", "dest": "app.py" }
   ]
 }
