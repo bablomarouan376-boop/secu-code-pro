@@ -20,62 +20,53 @@
     
     <style>
         :root { --accent: #2563eb; --bg: #020617; }
-        body { font-family: 'Cairo', 'Inter', sans-serif; background-color: var(--bg); color: white; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); color: white; transition: all 0.4s ease; overflow-x: hidden; }
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 50% -20%, #1e3a8a 0%, #020617 80%); }
         .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 2rem; }
-        .btn-prime { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .btn-prime { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); transition: 0.3s; }
+        .btn-prime:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4); }
         .scanning-bar { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(37, 99, 235, 0.2), transparent); animation: scan-move 2s infinite; }
         @keyframes scan-move { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
         .modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
         .modal.active { display: flex; opacity: 1; }
-        [lang="en"] { font-family: 'Inter', sans-serif; }
+        .modal-content { transform: scale(0.9); transition: transform 0.3s ease; }
+        .modal.active .modal-content { transform: scale(1); }
+        [lang="en"] body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body>
     <div class="bg-glow"></div>
     <main class="max-w-5xl mx-auto px-6 py-12">
         
-        <header class="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
+        <header class="flex flex-col md:flex-row justify-between items-center gap-6 mb-16 text-center md:text-right">
             <div class="flex items-center gap-5">
                 <img src="/static/og-image.jpg" alt="Logo" class="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border border-blue-500/30 shadow-xl shadow-blue-500/10">
                 <div>
                     <h1 class="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">SECUCODE <span class="text-blue-600">PRO</span></h1>
-                    <p id="hero-sub" class="text-[10px] font-bold tracking-[0.4em] text-slate-500 uppercase mt-2">نظام طارق مصطفى للذكاء الاصطناعي الأمني</p>
+                    <p id="txt-hero-sub" class="text-[10px] font-bold tracking-[0.4em] text-slate-500 uppercase mt-2">نظام طارق مصطفى للذكاء الاصطناعي الأمني</p>
                 </div>
             </div>
             <button onclick="toggleLang()" id="langBtn" class="glass-card px-8 py-2 text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all border-blue-500/20">English</button>
         </header>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            <div class="glass-card p-8">
-                <h3 id="txt-total-lbl" class="text-[10px] font-black text-slate-500 uppercase mb-2">إجمالي التحليلات</h3>
-                <p id="totalScanned" class="text-3xl font-black font-mono tracking-tighter">--</p>
-            </div>
-            <div class="glass-card p-8">
-                <h3 id="txt-threats-lbl" class="text-[10px] font-black text-slate-500 uppercase mb-2">تهديدات محجوبة</h3>
-                <p id="threatsDetected" class="text-3xl font-black text-red-500 font-mono tracking-tighter">--</p>
-            </div>
-            <div class="glass-card p-8">
-                <h3 id="txt-accuracy-lbl" class="text-[10px] font-black text-slate-500 uppercase mb-2">مؤشر الدقة</h3>
-                <p class="text-3xl font-black text-green-500 font-mono tracking-tighter">100%</p>
-            </div>
-            <div class="glass-card p-8 border-dashed border-white/10 flex items-center justify-center">
-                <span id="txt-status" class="text-[9px] font-black text-purple-400 uppercase italic animate-pulse">Live Sync</span>
-            </div>
+            <div class="glass-card p-8"><h3 id="txt-total-lbl" class="text-[10px] font-black text-slate-500 uppercase mb-2">إجمالي التحليلات</h3><p id="totalScanned" class="text-3xl font-black font-mono tracking-tighter">--</p></div>
+            <div class="glass-card p-8"><h3 id="txt-threats-lbl" class="text-[10px] font-black text-slate-500 uppercase mb-2">تهديدات محجوبة</h3><p id="threatsDetected" class="text-3xl font-black text-red-500 font-mono tracking-tighter">--</p></div>
+            <div class="glass-card p-8"><h3 id="txt-accuracy-lbl" class="text-[10px] font-black text-slate-500 uppercase mb-2">مؤشر الدقة</h3><p class="text-3xl font-black text-green-500 font-mono tracking-tighter">100%</p></div>
+            <div class="glass-card p-8 border-dashed border-white/10 flex items-center justify-center"><span id="txt-status" class="text-[9px] font-black text-purple-400 uppercase italic animate-pulse">Live Sync</span></div>
         </div>
 
         <div class="glass-card p-2 md:p-4 mb-20 relative overflow-hidden group shadow-2xl">
             <div id="scanLine" class="hidden scanning-bar"></div>
             <div class="flex flex-col md:flex-row items-center gap-2">
-                <input type="url" id="urlInput" placeholder="أدخل الرابط لبدء الفحص السلوكي الشامل..." class="flex-1 bg-transparent px-6 py-5 outline-none text-lg font-bold placeholder:text-slate-600">
-                <button onclick="runAnalysis()" id="scanBtn" class="btn-prime w-full md:w-auto px-12 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all">
-                    <i data-lucide="shield-check" class="w-6 h-6"></i>
-                    <span id="txt-scan-btn">التحليل الفوري</span>
+                <input type="url" id="urlInput" placeholder="أدخل الرابط لبدء الفحص السلوكي الشامل..." class="flex-1 bg-transparent px-6 py-5 outline-none text-lg font-bold">
+                <button onclick="runAnalysis()" id="scanBtn" class="btn-prime w-full md:w-auto px-12 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3">
+                    <i data-lucide="shield-check"></i><span id="txt-scan-btn">التحليل الفوري</span>
                 </button>
             </div>
         </div>
 
-        <div id="resultsArea" class="hidden space-y-8 animate-all"></div>
+        <div id="resultsArea" class="hidden space-y-8"></div>
 
         <footer class="mt-32 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[9px] text-slate-600 font-black tracking-[0.3em] uppercase">
             <div class="flex gap-10">
@@ -86,11 +77,21 @@
         </footer>
     </main>
 
-    <div id="aboutModal" class="modal"><div class="glass-card p-10 max-w-2xl mx-4 relative scale-95 transition-transform duration-300">
-        <button onclick="closeModal('aboutModal')" class="absolute top-6 left-6 p-2 hover:rotate-90 transition-all text-slate-400"><i data-lucide="x"></i></button>
-        <h2 id="txt-modal-title" class="text-3xl font-black text-blue-500 mb-6 italic">بروتوكول النظام</h2>
-        <p id="txt-modal-desc" class="text-slate-300 leading-relaxed text-lg">نظام SecuCode Pro هو منصة رصد سيبراني متقدمة صممها المطور طارق مصطفى باستخدام محركات فحص هجينة تعتمد على تحليل الأكواد في الوقت الفعلي وكشف محاولات التجسس الرقمي.</p>
-    </div></div>
+    <div id="aboutModal" class="modal">
+        <div class="glass-card p-10 max-w-2xl mx-4 relative modal-content border-blue-500/20">
+            <button onclick="closeModal('aboutModal')" class="absolute top-6 left-6 p-2 hover:rotate-90 transition-all text-slate-400"><i data-lucide="x"></i></button>
+            <h2 id="txt-modal-title" class="text-3xl font-black text-blue-500 mb-6 italic">بروتوكول النظام</h2>
+            <p id="txt-modal-desc" class="text-slate-300 leading-relaxed text-lg">نظام SecuCode Pro هو منصة رصد سيبراني متقدمة صممها المطور طارق مصطفى باستخدام محركات فحص هجينة تعتمد على تحليل الأكواد وكشف التجسس.</p>
+        </div>
+    </div>
+
+    <div id="privModal" class="modal">
+        <div class="glass-card p-10 max-w-2xl mx-4 relative modal-content border-red-500/20">
+            <button onclick="closeModal('privModal')" class="absolute top-6 left-6 p-2 hover:rotate-90 transition-all text-slate-400"><i data-lucide="x"></i></button>
+            <h2 id="txt-priv-title" class="text-3xl font-black text-red-500 mb-6 italic">سياسة التشفير</h2>
+            <p id="txt-priv-desc" class="text-slate-300 leading-relaxed text-lg">خصوصيتك هي أولويتنا. جميع الروابط تمر عبر قنوات مشفرة بالكامل، ولا يتم تسجيل أي بيانات تخص هويتك أو موقعك الجغرافي لضمان حماية تامة.</p>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <script type="module">
@@ -101,79 +102,55 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); });
-        }
+        const i18n = {
+            ar: {
+                hero: "نظام طارق مصطفى للذكاء الاصطناعي الأمني",
+                total: "إجمالي التحليلات", threats: "تهديدات محجوبة", acc: "مؤشر الدقة", status: "Live Sync",
+                placeholder: "أدخل الرابط لبدء الفحص السلوكي الشامل...", btn: "التحليل الفوري",
+                about: "بروتوكول النظام", priv: "سياسة التشفير", copy: "© 2026 SECUCODE PRO • BY TAREK MOSTAFA",
+                mTitle: "بروتوكول النظام", mDesc: "نظام SecuCode Pro هو منصة رصد سيبراني متقدمة صممها المطور طارق مصطفى باستخدام محركات فحص هجينة تعتمد على تحليل الأكواد وكشف التجسس.",
+                pTitle: "سياسة التشفير", pDesc: "خصوصيتك هي أولويتنا. جميع الروابط تمر عبر قنوات مشفرة بالكامل، ولا يتم تسجيل أي بيانات تخص هويتك أو موقعك الجغرافي لضمان حماية تامة.",
+                resSafe: "آمن تماماً", resCrit: "تهديد حرج", risk: "مؤشر الخطورة"
+            },
+            en: {
+                hero: "Tarek Mostafa Security Intelligence AI",
+                total: "TOTAL SCANS", threats: "THREATS BLOCKED", acc: "ACCURACY RATE", status: "Live Sync",
+                placeholder: "Input URL for aggressive security scan...", btn: "EXECUTE SCAN",
+                about: "SYSTEM PROTOCOL", priv: "ENCRYPTION POLICY", copy: "© 2026 SECUCODE PRO • BY TAREK MOSTAFA",
+                mTitle: "SYSTEM PROTOCOL", mDesc: "SecuCode Pro is an advanced cyber-surveillance platform developed by Tarek Mostafa, utilizing hybrid engines for real-time code analysis.",
+                pTitle: "ENCRYPTION POLICY", pDesc: "Privacy first. All links pass through encrypted channels. No personal data or geographic logs are stored, ensuring your total anonymity.",
+                resSafe: "FULLY SECURED", resCrit: "CRITICAL THREAT", risk: "RISK FACTOR"
+            }
+        };
 
-        // Stats Logic
+        let currentLang = 'ar';
+        window.toggleLang = () => {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            const d = i18n[currentLang];
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.documentElement.lang = currentLang;
+            document.getElementById('langBtn').innerText = currentLang === 'ar' ? 'English' : 'العربية';
+            document.getElementById('txt-hero-sub').innerText = d.hero;
+            document.getElementById('txt-total-lbl').innerText = d.total;
+            document.getElementById('txt-threats-lbl').innerText = d.threats;
+            document.getElementById('txt-accuracy-lbl').innerText = d.acc;
+            document.getElementById('txt-status').innerText = d.status;
+            document.getElementById('urlInput').placeholder = d.placeholder;
+            document.getElementById('txt-scan-btn').innerText = d.btn;
+            document.getElementById('txt-footer-about').innerText = d.about;
+            document.getElementById('txt-footer-priv').innerText = d.priv;
+            document.getElementById('txt-copyright').innerText = d.copy;
+            document.getElementById('txt-modal-title').innerText = d.mTitle;
+            document.getElementById('txt-modal-desc').innerText = d.mDesc;
+            document.getElementById('txt-priv-title').innerText = d.pTitle;
+            document.getElementById('txt-priv-desc').innerText = d.pDesc;
+        };
+
         onValue(ref(db, 'stats'), (s) => {
             const d = s.val() || { clicks: 0, threats: 0 };
             document.getElementById('totalScanned').innerText = d.clicks.toLocaleString();
             document.getElementById('threatsDetected').innerText = d.threats.toLocaleString();
         });
-
-        // Dictionary for Languages
-        const i18n = {
-            ar: {
-                hero: "نظام طارق مصطفى للذكاء الاصطناعي الأمني",
-                total: "إجمالي التحليلات",
-                threats: "تهديدات محجوبة",
-                acc: "مؤشر الدقة",
-                status: "Live Sync",
-                placeholder: "أدخل الرابط لبدء الفحص السلوكي الشامل...",
-                btn: "التحليل الفوري",
-                about: "بروتوكول النظام",
-                priv: "سياسة التشفير",
-                copy: "© 2026 SECUCODE PRO • BY TAREK MOSTAFA",
-                modalTitle: "بروتوكول النظام",
-                modalDesc: "نظام SecuCode Pro هو منصة رصد سيبراني متقدمة صممها المطور طارق مصطفى باستخدام محركات فحص هجينة تعتمد على تحليل الأكواد في الوقت الفعلي وكشف محاولات التجسس الرقمي.",
-                resSafe: "آمن تماماً",
-                resCrit: "تهديد حرج",
-                riskFactor: "مؤشر الخطورة"
-            },
-            en: {
-                hero: "Tarek Mostafa Security Intelligence AI",
-                total: "TOTAL SCANS",
-                threats: "THREATS BLOCKED",
-                acc: "ACCURACY RATE",
-                status: "Live Sync",
-                placeholder: "Input URL for aggressive security scan...",
-                btn: "EXECUTE SCAN",
-                about: "SYSTEM PROTOCOL",
-                priv: "ENCRYPTION POLICY",
-                copy: "© 2026 SECUCODE PRO • BY TAREK MOSTAFA",
-                modalTitle: "SYSTEM PROTOCOL",
-                modalDesc: "SecuCode Pro is an advanced cyber-surveillance platform developed by Tarek Mostafa, utilizing hybrid engines for real-time code analysis and spyware detection.",
-                resSafe: "FULLY SECURED",
-                resCrit: "CRITICAL THREAT",
-                riskFactor: "RISK FACTOR"
-            }
-        };
-
-        let currentLang = 'ar';
-
-        window.toggleLang = function() {
-            currentLang = currentLang === 'ar' ? 'en' : 'ar';
-            const dict = i18n[currentLang];
-            
-            // Apply Translations
-            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            document.documentElement.lang = currentLang;
-            document.getElementById('langBtn').innerText = currentLang === 'ar' ? 'English' : 'العربية';
-            document.getElementById('hero-sub').innerText = dict.hero;
-            document.getElementById('txt-total-lbl').innerText = dict.total;
-            document.getElementById('txt-threats-lbl').innerText = dict.threats;
-            document.getElementById('txt-accuracy-lbl').innerText = dict.acc;
-            document.getElementById('txt-status').innerText = dict.status;
-            document.getElementById('urlInput').placeholder = dict.placeholder;
-            document.getElementById('txt-scan-btn').innerText = dict.btn;
-            document.getElementById('txt-footer-about').innerText = dict.about;
-            document.getElementById('txt-footer-priv').innerText = dict.priv;
-            document.getElementById('txt-copyright').innerText = dict.copy;
-            document.getElementById('txt-modal-title').innerText = dict.modalTitle;
-            document.getElementById('txt-modal-desc').innerText = dict.modalDesc;
-        }
 
         window.runAnalysis = async function() {
             const url = document.getElementById('urlInput').value.trim();
@@ -183,40 +160,33 @@
             btn.disabled = true; line.classList.remove('hidden');
 
             try {
-                const res = await fetch('/analyze', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ link: url })
-                });
+                const res = await fetch('/analyze', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ link: url }) });
                 const data = await res.json();
                 runTransaction(ref(db, 'stats/clicks'), (c) => (c || 0) + 1);
                 if(data.risk_score === 'Critical') runTransaction(ref(db, 'stats/threats'), (t) => (t || 0) + 1);
                 renderUI(data, url);
-            } catch (e) { alert(currentLang === 'ar' ? "فشل الاتصال بالسيرفر" : "Server Connection Failed"); }
+            } catch (e) { alert(currentLang === 'ar' ? "فشل الاتصال" : "Connection Failed"); }
             finally { btn.disabled = false; line.classList.add('hidden'); }
-        }
+        };
 
         function renderUI(data, originalUrl) {
             const area = document.getElementById('resultsArea');
             area.classList.remove('hidden');
-            const dict = i18n[currentLang];
+            const d = i18n[currentLang];
             const color = data.risk_score === 'Critical' ? '#ef4444' : '#22c55e';
-            
             area.innerHTML = `
                 <div class="grid lg:grid-cols-2 gap-8 animate-in slide-in-from-bottom-5 duration-700">
                     <div class="glass-card p-10 border-r-[12px] flex flex-col justify-between" style="border-color: ${color}">
                         <div>
-                            <h2 class="text-5xl font-black italic mb-6 uppercase tracking-tighter" style="color: ${color}">
-                                ${data.risk_score === 'Critical' ? dict.resCrit : dict.resSafe}
-                            </h2>
+                            <h2 class="text-5xl font-black italic mb-6 uppercase tracking-tighter" style="color: ${color}">${data.risk_score === 'Critical' ? d.resCrit : d.resSafe}</h2>
                             <p class="text-slate-400 leading-relaxed text-lg">${data.violations[0].desc}</p>
                         </div>
                         <div class="mt-10 pt-6 border-t border-white/5">
-                            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">${dict.riskFactor}</span>
+                            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">${d.risk}</span>
                             <p class="text-4xl font-black font-mono" style="color: ${color}">${data.points}%</p>
                         </div>
                     </div>
-                    <div class="glass-card p-4 overflow-hidden shadow-2xl">
+                    <div class="glass-card p-4 shadow-2xl overflow-hidden">
                         <img src="${data.screenshot}" class="w-full h-full object-cover rounded-2xl" onerror="this.src='https://api.screenshotmachine.com/?key=6f0b4d&url=${originalUrl}&dimension=1024x768'">
                     </div>
                 </div>`;
@@ -224,17 +194,10 @@
             area.scrollIntoView({ behavior: 'smooth' });
         }
 
-        window.openModal = (id) => {
-            const m = document.getElementById(id);
-            m.classList.add('active');
-            setTimeout(() => m.querySelector('.glass-card').style.transform = 'scale(1)', 10);
-        };
-        window.closeModal = (id) => {
-            const m = document.getElementById(id);
-            m.querySelector('.glass-card').style.transform = 'scale(0.9)';
-            setTimeout(() => m.classList.remove('active'), 200);
-        };
+        window.openModal = (id) => document.getElementById(id).classList.add('active');
+        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
         lucide.createIcons();
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
     </script>
 </body>
 </html>
