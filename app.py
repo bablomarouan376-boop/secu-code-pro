@@ -9,84 +9,55 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = "8072400877:AAEhIU4s8csph7d6NBM5MlZDlfWIAV7ca2o"
 CHAT_ID = "7421725464"
 
-# --- [ مسارات ملفات SEO والـ PWA من داخل مجلد static ] ---
-
+# مسارات الملفات الثابتة (للتوافق مع محركات البحث)
 @app.route('/robots.txt')
-def static_from_root_robots():
-    return send_from_directory('static', 'robots.txt')
+def robots(): return send_from_directory('static', 'robots.txt')
 
 @app.route('/sitemap.xml')
-def static_from_root_sitemap():
-    return send_from_directory('static', 'sitemap.xml')
-
-@app.route('/manifest.json')
-def static_from_root_manifest():
-    return send_from_directory('static', 'manifest.json')
+def sitemap(): return send_from_directory('static', 'sitemap.xml')
 
 @app.route('/sw.js')
-def static_from_root_sw():
-    return send_from_directory('static', 'sw.js')
-
-# --- [ محرك الذكاء الأمني المتقدم ] ---
-BLACKLIST_DB = set()
-WHITELIST = {'google.com', 'facebook.com', 'microsoft.com', 'apple.com', 'github.com'}
-
-def sync_engine():
-    global BLACKLIST_DB
-    while True:
-        try:
-            new_db = set()
-            sources = ["https://openphish.com/feed.txt"]
-            for s in sources:
-                r = requests.get(s, timeout=15)
-                if r.status_code == 200:
-                    domains = re.findall(r'(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]', r.text)
-                    new_db.update([d.lower() for d in domains])
-            BLACKLIST_DB = new_db
-        except: pass
-        time.sleep(3600)
-
-Thread(target=sync_engine, daemon=True).start()
+def sw(): return send_from_directory('static', 'sw.js')
 
 @app.route('/')
-def index(): 
-    return render_template('index.html')
+def index(): return render_template('index.html')
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
     url = request.json.get('link', '').strip()
     if not url.startswith('http'): url = 'https://' + url
     
-    score, violations = 0, []
+    score, v_key = 0, "CLEAN"
     domain = urlparse(url).netloc.lower().replace('www.', '')
 
     try:
+        # 1. فحص القوائم الموثوقة
+        WHITELIST = {'google.com', 'facebook.com', 'microsoft.com', 'apple.com', 'github.com'}
         if any(w in domain for w in WHITELIST):
-            score, violations = 0, [{"name": "Trusted Authority", "desc": "النطاق مسجل ضمن المؤسسات الموثوقة عالمياً."}]
-        elif domain in BLACKLIST_DB:
-            score, violations = 100, [{"name": "Malicious Host", "desc": "تم رصد النطاق في قوائم التهديدات النشطة (Phishing Database)."}]
+            score, v_key = 0, "TRUSTED"
         else:
-            res = requests.get(url, timeout=8, headers={"User-Agent": "SecuCode-Sentry-2026"}, verify=False)
+            # 2. محاكاة فحص سلوكي (Request)
+            res = requests.get(url, timeout=7, verify=False, headers={"User-Agent": "SecuCode-AI"})
             html = res.text
-            if re.search(r'getUserMedia|mediaDevices|camera|microphone', html, re.I):
-                score = 98
-                violations.append({"name": "Spyware Pattern", "desc": "تم رصد أكواد تحاول الوصول للكاميرا أو الميكروفون بشكل مريب."})
-            if not violations:
-                violations = [{"name": "Clean Logic", "desc": "تحليل السلوك البرمجي لم يظهر أي أنشطة عدوانية حالياً."}]
+            if re.search(r'getUserMedia|camera|microphone', html, re.I):
+                score, v_key = 95, "SPYWARE"
+            elif len(re.findall(r'<script', html)) > 50:
+                score, v_key = 65, "EXCESSIVE_SCRIPTS"
+            else:
+                score, v_key = 20, "CLEAN"
     except:
-        score, violations = 45, [{"name": "Analysis Shield", "desc": "الموقع يمنع الفحص الآلي، نوصي بالحذر عند التعامل معه."}]
+        score, v_key = 45, "SHIELD"
 
-    # إرسال إشعار تليجرام لطارق
+    # إشعار تليجرام
     try:
-        status = "🛑 CRITICAL" if score >= 80 else "🛡️ SAFE"
-        msg = f"🔍 [SCAN] SecuCode Pro\n🌐 Host: {domain}\n📊 Risk: {score}%\n⚠️ Status: {status}"
+        msg = f"🔍 [SCAN] {domain}\n📊 Risk: {score}%\n🛡️ Key: {v_key}"
         requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": msg}, timeout=1)
     except: pass
 
     return jsonify({
-        "risk_score": "Critical" if score >= 80 else "Safe", 
-        "points": score, 
-        "violations": violations,
+        "risk_score": "Critical" if score >= 75 else "Safe",
+        "points": score,
+        "violation_key": v_key, # هذا هو مفتاح الترجمة
         "screenshot": f"https://s0.wp.com/mshots/v1/{url}?w=800&h=600"
     })
 
