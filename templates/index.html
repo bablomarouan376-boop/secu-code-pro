@@ -12,27 +12,49 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
     <script src="https://cdn.tailwindcss.com/3.4.1"></script>
     <script src="https://unpkg.com/lucide@0.300.0/dist/umd/lucide.min.js" defer></script>
 
     <style>
         :root { --bg: #020617; --blue: #2563eb; --text-gray: #cbd5e1; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: #f8fafc; margin: 0; min-height: 100vh; transition: all 0.3s ease; }
+        
+        /* تقليل الـ CLS لضمان سكور 100 */
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background: var(--bg); 
+            color: #f8fafc; 
+            margin: 0; 
+            min-height: 100vh; 
+            transition: opacity 0.3s ease;
+            content-visibility: auto;
+        }
+
         .glass { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .text-fix { color: var(--text-gray) !important; }
+        
         .stat-card { min-height: 120px; display: flex; flex-direction: column; justify-content: center; }
+        
+        /* انيميشن الفحص الذكي */
         .scan-line { 
             position: absolute; height: 3px; width: 100%; 
             background: linear-gradient(to right, transparent, #3b82f6, transparent);
             animation: scan 2s linear infinite; 
+            box-shadow: 0 0 10px #3b82f6;
         }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
         button:focus, input:focus { outline: 2px solid var(--blue); outline-offset: 2px; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+        
         #langBtn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); }
-        #langBtn:hover { background: var(--blue); }
+        #langBtn:hover { background: var(--blue); border-color: transparent; }
+
+        /* تحسين استجابة النتائج */
+        #resultsArea { min-height: 0; transition: all 0.5s ease; }
     </style>
 </head>
 <body class="p-6 md:p-12 relative">
@@ -77,13 +99,13 @@
             </button>
         </div>
 
-        <div id="resultsArea" class="hidden min-h-[300px]"></div>
+        <div id="resultsArea" class="hidden min-h-[300px] mb-20"></div>
     </main>
 
     <footer class="mt-32 text-center border-t border-white/5 pt-10 pb-12">
         <div class="flex justify-center gap-8 mb-8">
-            <button onclick="openModal('aboutModal')" id="footer-about" class="text-[10px] font-bold text-fix hover:text-blue-500 uppercase tracking-[0.2em]">عن النظام</button>
-            <button onclick="openModal('privacyModal')" id="footer-privacy" class="text-[10px] font-bold text-fix hover:text-blue-500 uppercase tracking-[0.2em]">سياسة الخصوصية</button>
+            <button onclick="openModal('aboutModal')" id="footer-about" class="text-[10px] font-bold text-fix hover:text-blue-500 transition-colors uppercase tracking-[0.2em]">عن النظام</button>
+            <button onclick="openModal('privacyModal')" id="footer-privacy" class="text-[10px] font-bold text-fix hover:text-blue-500 transition-colors uppercase tracking-[0.2em]">سياسة الخصوصية</button>
         </div>
         <p class="text-fix text-[11px] font-bold tracking-[0.3em] uppercase">
             &copy; 2026 SECUCODE PRO - DEVELOPED BY TAREK MOSTAFA
@@ -92,7 +114,7 @@
 
     <div id="aboutModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div class="glass max-w-2xl w-full p-10 rounded-[2.5rem] relative animate-in zoom-in duration-300">
-            <button onclick="closeModal('aboutModal')" class="absolute top-8 left-8 text-fix hover:text-white"><i data-lucide="x"></i></button>
+            <button onclick="closeModal('aboutModal')" class="absolute top-8 left-8 text-fix hover:text-white transition-transform hover:rotate-90"><i data-lucide="x"></i></button>
             <h3 id="modal-about-title" class="text-3xl font-black mb-6 text-blue-500 italic uppercase">عن النظام</h3>
             <div id="modal-about-body" class="space-y-4 text-fix text-sm leading-relaxed"></div>
         </div>
@@ -100,13 +122,14 @@
 
     <div id="privacyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div class="glass max-w-2xl w-full p-10 rounded-[2.5rem] relative animate-in zoom-in duration-300">
-            <button onclick="closeModal('privacyModal')" class="absolute top-8 left-8 text-fix hover:text-white"><i data-lucide="x"></i></button>
+            <button onclick="closeModal('privacyModal')" class="absolute top-8 left-8 text-fix hover:text-white transition-transform hover:rotate-90"><i data-lucide="x"></i></button>
             <h3 id="modal-priv-title" class="text-3xl font-black mb-6 text-red-500 italic uppercase">سياسة الخصوصية</h3>
             <div id="modal-priv-body" class="space-y-4 text-fix text-sm leading-relaxed"></div>
         </div>
     </div>
 
     <script>
+        // نظام الترجمة والتحكم (Optimized JavaScript)
         const translations = {
             ar: {
                 dir: "rtl", langBtn: "English",
@@ -118,7 +141,7 @@
                 aboutBody: "<p>نظام SecuCode Pro هو مشروع أمني متكامل طوره طارق مصطفى، يهدف إلى خلق فضاء إلكتروني آمن للمستخدم العربي.</p><p>يعمل النظام عبر خوارزميات ذكاء اصطناعي تقوم بتحليل الروابط واكتشاف محاولات التجسس على الكاميرا وصفحات التصيد.</p>",
                 privTitle: "Privacy Policy",
                 privBody: "<p>خصوصيتك هي أولويتنا: لا نسجل بياناتك، الروابط المفحوصة لا يتم حفظها، والفحص يتم في بيئة معزولة تماماً.</p>",
-                statusLabel: "حالة الأمان", riskLabel: "نقاط الخطورة"
+                statusLabel: "حالة الأمان", riskLabel: "نقاط الخطورة", errorNet: "خطأ في الشبكة"
             },
             en: {
                 dir: "ltr", langBtn: "العربية",
@@ -130,7 +153,7 @@
                 aboutBody: "<p>SecuCode Pro is an advanced security system developed by Tarek Mostafa, protecting your digital space.</p><p>The system uses AI to analyze links for spy-scripts, phishing, and unauthorized camera access.</p>",
                 privTitle: "Privacy Policy",
                 privBody: "<p>Your privacy is our priority: No logs are kept, no URLs are stored, and analysis runs in a 100% secure sandbox.</p>",
-                statusLabel: "Security Status", riskLabel: "Risk Index"
+                statusLabel: "Security Status", riskLabel: "Risk Index", errorNet: "Network Error"
             }
         };
 
@@ -172,7 +195,8 @@
             if(!val) return;
             const btn = document.getElementById('scanBtn');
             const line = document.getElementById('scanLine');
-            btn.disabled = true; line.classList.remove('hidden');
+            btn.disabled = true; 
+            line.classList.remove('hidden');
 
             try {
                 const res = await fetch('/analyze', {
@@ -182,13 +206,19 @@
                 });
                 const data = await res.json();
                 renderResults(data);
-            } catch (e) { alert(currentLang === 'ar' ? "خطأ في الشبكة" : "Network Error"); }
-            finally { btn.disabled = false; line.classList.add('hidden'); }
+            } catch (e) { 
+                alert(translations[currentLang].errorNet); 
+            } finally { 
+                btn.disabled = false; 
+                line.classList.add('hidden'); 
+            }
         }
 
         function renderResults(data) {
             const area = document.getElementById('resultsArea');
             area.classList.remove('hidden');
+            
+            // Update stats from server
             document.getElementById('totalScanned').textContent = data.stats.total.toLocaleString();
             document.getElementById('threatsDetected').textContent = data.stats.threats.toLocaleString();
             
@@ -197,31 +227,46 @@
 
             area.innerHTML = `
                 <div class="glass p-10 rounded-[3rem] border-r-[15px] animate-in slide-in-from-bottom-10 duration-700" style="border-color: ${color}">
-                    <div class="flex justify-between items-center mb-10">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
                         <div>
                             <p class="text-[10px] font-bold text-fix uppercase mb-2">${t.statusLabel}</p>
-                            <h2 class="text-6xl font-black italic uppercase" style="color: ${color}">${data.risk_score}</h2>
+                            <h2 class="text-5xl md:text-6xl font-black italic uppercase" style="color: ${color}">${data.risk_score}</h2>
                         </div>
-                        <div class="text-right">
-                            <p class="text-6xl font-black" style="color: ${color}">${data.points}</p>
+                        <div class="text-left md:text-right w-full md:w-auto">
+                            <p class="text-6xl font-black font-mono" style="color: ${color}">${data.points}</p>
                             <p class="text-[10px] font-bold text-fix uppercase">${t.riskLabel}</p>
                         </div>
                     </div>
                     <div class="space-y-4">
                         ${data.violations.map(v => `
-                            <div class="bg-white/5 p-6 rounded-2xl border border-white/5">
+                            <div class="bg-white/5 p-6 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
                                 <h4 class="font-black text-blue-500 mb-1">${v.name}</h4>
                                 <p class="text-sm text-fix leading-relaxed">${v.desc}</p>
                             </div>
                         `).join('')}
                     </div>
                 </div>`;
+            
             lucide.createIcons();
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            area.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function openModal(id) { 
+            document.getElementById(id).classList.remove('hidden'); 
+            document.body.style.overflow = 'hidden'; 
+        }
+        function closeModal(id) { 
+            document.getElementById(id).classList.add('hidden'); 
+            document.body.style.overflow = 'auto'; 
+        }
+
+        // Close on outside click
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('bg-black/80')) {
+                e.target.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        });
     </script>
 </body>
 </html>
