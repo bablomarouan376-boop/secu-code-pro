@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SECUCODE PRO | Tactical Security Intelligence</title>
+    <title>SECUCODE PRO | Tarek Mostafa Cyber Intel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -12,12 +12,13 @@
         :root { --blue-primary: #2563eb; --red-alert: #ef4444; }
         body { font-family: 'Cairo', 'Inter', sans-serif; background: #020617; color: white; min-height: 100vh; overflow-x: hidden; }
         .cyber-grid { background-image: linear-gradient(rgba(37,99,235,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.05) 1px, transparent 1px); background-size: 30px 30px; }
-        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.5rem; }
-        .status-pill { padding: 4px 12px; border-radius: 999px; font-size: 10px; font-weight: 900; letter-spacing: 1px; }
-        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--blue-primary); box-shadow: 0 0 15px var(--blue-primary); animation: scanning 2s infinite linear; pointer-events: none; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.5rem; }
+        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--blue-primary); box-shadow: 0 0 15px var(--blue-primary); animation: scanning 3s infinite linear; pointer-events: none; opacity: 0.5; }
         @keyframes scanning { 0% { top: 0; } 100% { top: 100%; } }
-        .modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
+        .modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.95); align-items: center; justify-content: center; transition: 0.3s; }
         .modal.active { display: flex; opacity: 1; }
+        #reader { width: 100% !important; border-radius: 1rem; overflow: hidden; border: 2px solid #2563eb !important; }
+        .glow-red { box-shadow: 0 0 50px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4) !important; }
     </style>
 </head>
 <body class="cyber-grid p-4 md:p-8">
@@ -36,7 +37,7 @@
                     </div>
                 </div>
             </div>
-            <button onclick="toggleLang()" id="langBtn" class="px-6 py-2 glass hover:bg-white/5 text-[10px] font-black uppercase transition-all"></button>
+            <button onclick="toggleLang()" id="langBtn" class="px-6 py-2 glass hover:bg-white/5 text-[10px] font-black uppercase transition-all border-white/10"></button>
         </header>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -48,42 +49,46 @@
                 <p id="txt-threats-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1"></p>
                 <span id="threatsDetected" class="text-2xl font-black font-mono text-red-500 tracking-tighter">0000</span>
             </div>
-            <div class="glass p-5">
-                <p id="txt-accuracy-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1"></p>
-                <span class="text-2xl font-black font-mono text-emerald-500 tracking-tighter">100%</span>
-            </div>
-            <div class="glass p-5 flex items-center justify-center">
-                <span id="txt-status" class="status-pill bg-blue-600/20 text-blue-400"></span>
-            </div>
+            <div class="glass p-5"><p id="txt-accuracy-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1"></p><span class="text-2xl font-black font-mono text-emerald-500">100%</span></div>
+            <div class="glass p-5 flex items-center justify-center"><span id="txt-status" class="px-3 py-1 bg-blue-600/10 text-blue-400 text-[10px] font-black rounded-full uppercase tracking-widest"></span></div>
         </div>
 
-        <section class="glass p-8 md:p-12 relative overflow-hidden">
+        <section class="glass p-8 md:p-12 relative overflow-hidden border-white/5">
             <div class="scan-line"></div>
-            <div class="relative z-10 space-y-6">
+            <div class="relative z-10 space-y-8">
                 <div class="flex flex-col gap-2">
-                    <h2 id="txt-input-label" class="text-xs font-black text-blue-500 uppercase tracking-[0.3em]"></h2>
-                    <p class="text-[10px] text-slate-500 uppercase">Automated Forensic Payload Analysis</p>
+                    <h2 id="txt-input-label" class="text-xs font-black text-blue-500 uppercase tracking-[0.4em]"></h2>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest">Advanced Forensic Protocol v8.0</p>
                 </div>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="flex-1 relative group">
-                        <input type="url" id="urlInput" class="w-full bg-black/50 border border-white/10 p-5 rounded-2xl focus:outline-none focus:border-blue-500 transition-all font-mono text-sm text-left dir-ltr" placeholder="https://target-protocol.com">
-                        <button onclick="openScanner()" class="absolute left-4 top-1/2 -translate-y-1/2 p-2 hover:bg-white/5 rounded-lg transition-all">
-                            <i data-lucide="maximize" class="w-5 h-5 text-blue-400"></i>
+
+                <div class="flex flex-col gap-6">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 z-20">
+                            <button onclick="openScanner()" class="p-3 bg-blue-600/10 hover:bg-blue-600/30 border border-blue-500/30 rounded-xl transition-all active:scale-90" title="QR Audit">
+                                <i data-lucide="scan-eye" class="w-6 h-6 text-blue-400"></i>
+                            </button>
+                        </div>
+                        <input type="url" id="urlInput" class="w-full bg-black/60 border-2 border-white/5 p-6 pr-20 rounded-2xl focus:outline-none focus:border-blue-600 transition-all font-mono text-base text-left dir-ltr placeholder-slate-700" placeholder="https://">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="runAnalysis()" id="scanBtn" class="group relative bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-4 transition-all active:scale-95 shadow-xl shadow-blue-900/20">
+                            <i data-lucide="activity" class="w-5 h-5"></i>
+                            <span id="txt-scan-btn"></span>
+                        </button>
+                        <button onclick="document.getElementById('urlInput').value=''" class="bg-white/5 hover:bg-red-500/10 border border-white/10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-500 hover:text-red-500 transition-all active:scale-95 flex items-center justify-center gap-3">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            <span>Clear Buffer</span>
                         </button>
                     </div>
-                    <button onclick="runAnalysis()" id="scanBtn" class="md:w-64 bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-transform active:scale-95">
-                        <i data-lucide="activity" class="w-4 h-4"></i>
-                        <span id="txt-scan-btn"></span>
-                    </button>
                 </div>
             </div>
         </section>
 
-        <div id="loader" class="hidden glass p-10 text-center space-y-6 border-red-500/20">
-            <div class="flex justify-center"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-red-500"></div></div>
+        <div id="loader" class="hidden glass p-12 text-center border-red-500/20">
+            <div class="animate-spin h-10 w-10 border-4 border-red-600 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p id="loaderStatus" class="text-red-500 font-black text-[10px] uppercase tracking-widest"></p>
         </div>
-
         <div id="resultsArea" class="hidden space-y-6"></div>
 
         <footer class="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[9px] text-slate-500 font-black uppercase tracking-widest">
@@ -96,8 +101,8 @@
     </main>
 
     <div id="scannerModal" class="modal"><div class="glass p-6 w-full max-w-sm mx-4"><div id="reader"></div><button onclick="closeScanner()" id="txt-close-cam" class="w-full mt-4 py-3 bg-red-600/10 text-red-500 font-black text-[10px] uppercase"></button></div></div>
-    <div id="aboutModal" class="modal"><div class="glass p-8 max-w-lg mx-4 space-y-4 border-blue-500/30 shadow-2xl"><h2 id="txt-modal-title" class="text-xl font-black text-blue-500 uppercase"></h2><p id="txt-modal-desc" class="text-slate-400 text-sm leading-relaxed"></p><button onclick="closeModal('aboutModal')" class="btn-close w-full py-2 bg-white/5 rounded-lg text-xs font-black uppercase"></button></div></div>
-    <div id="privModal" class="modal"><div class="glass p-8 max-w-lg mx-4 space-y-4 border-red-500/30 shadow-2xl"><h2 id="txt-priv-title" class="text-xl font-black text-red-500 uppercase"></h2><p id="txt-priv-desc" class="text-slate-400 text-sm leading-relaxed"></p><button onclick="closeModal('privModal')" class="btn-close w-full py-2 bg-white/5 rounded-lg text-xs font-black uppercase"></button></div></div>
+    <div id="aboutModal" class="modal"><div class="glass p-8 max-w-lg mx-4 space-y-4 border-blue-500/30"><h2 id="txt-modal-title" class="text-xl font-black text-blue-500 uppercase"></h2><p id="txt-modal-desc" class="text-slate-400 text-sm leading-relaxed"></p><button onclick="closeModal('aboutModal')" class="btn-close w-full py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase"></button></div></div>
+    <div id="privModal" class="modal"><div class="glass p-8 max-w-lg mx-4 space-y-4 border-red-500/30"><h2 id="txt-priv-title" class="text-xl font-black text-red-500 uppercase"></h2><p id="txt-priv-desc" class="text-slate-400 text-sm leading-relaxed"></p><button onclick="closeModal('privModal')" class="btn-close w-full py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase"></button></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -109,84 +114,51 @@
 
         const i18n = {
             ar: {
-                hero: "نظام طارق مصطفى للاستخبارات الأمنية الهجومية",
-                total: "إجمالي البروتوكولات المفحوصة",
-                threats: "التهديدات الممنوعة (Blocked)",
-                acc: "دقة الفحص الجنائي",
-                status: "نظام الذكاء الاصطناعي: فعال",
-                inputLabel: "إطلاق تحليل المتجهات الجنائية على الرابط:",
-                btn: "إطلاق الفحص التكتيكي",
-                loading: "جاري تحليل الحمولة وفحص النواقل المشبوهة...",
-                closeCam: "تعطيل الكاميرا",
-                closeBtn: "إغلاق التقرير",
-                about: "بروتوكول النظام (About)",
-                priv: "معيار التشفير (Privacy)",
-                copy: "© 2026 SECUCODE PRO • CORE BY TAREK MOSTAFA",
-                mTitle: "دليل العمليات الأمني",
-                mDesc: "نظام رصد سيبراني متقدم يعتمد على تحليل السلوك والأنماط (Pattern Recognition) للكشف عن محاولات سحب بيانات الموقع (GPS) والتصيد الاحتيالي.",
-                pTitle: "بروتوكول تشفير البيانات",
-                pDesc: "يتم فحص الروابط عبر نفق مشفر AES-256. لا يتم أرشفة أي بيانات مفحوصة لضمان أمن العمليات الاستخباراتية.",
-                resSafe: "بروتوكول آمن: مصرح به",
-                resCrit: "تهديد سيبراني: محظور",
-                risk: "معامل الخطورة (Risk Level)",
-                diagnostic: "نتائج التشخيص الجنائي:",
-                recTitle: "التوجيهات الأمنية:",
-                recSafe: "النطاق يتبع معايير الأمان. مسموح بالدخول تحت الرقابة.",
-                recCrit: "تحذير: تم اكتشاف نشاط عدواني. يُمنع مشاركة أي بيانات حساسة.",
-                CLEAN: "لم يتم رصد أي نشاط عدواني في هيكلية الرابط.",
-                GEOLOCATION_TRAP: "محاولة اختراق الخصوصية: الرابط يحاول الوصول إلى إحداثيات GPS الخاصة بك.",
-                PHISHING_CLONE: "انتحال هوية رقمية: تم اكتشاف واجهة مزيفة تهدف لسرقة كلمات المرور.",
-                CAMERA_SPY: "تجسس بصري: تم رصد أكواد (Scripts) تحاول تفعيل الوسائط بدون تصريح.",
-                MALICIOUS_IP: "نطاق غير موثق: الموقع يعمل عبر عنوان IP مباشر، وهو سلوك عالي الخطورة.",
-                SHIELD: "تنبيه: الموقع يستخدم تقنيات Obfuscation لإخفاء نشاطه الحقيقي."
+                hero: "نظام طارق مصطفى للاستخبارات الأمنية الهجومية", total: "إجمالي الفحوصات الجنائية", threats: "التهديدات الممنوعة (Blocked)", acc: "دقة الفحص الجنائي", status: "AI ENGINE: ACTIVE",
+                inputLabel: "إطلاق تحليل المتجهات الجنائية على الرابط:", btn: "إطلاق الفحص التكتيكي", loading: "جاري تحليل الحمولة وفحص النواقل المشبوهة...",
+                closeCam: "تعطيل الكاميرا", closeBtn: "إغلاق التقرير", about: "بروتوكول النظام", priv: "معيار التشفير", copy: "© 2026 SECUCODE PRO • CORE BY TAREK MOSTAFA",
+                mTitle: "دليل العمليات الأمني", mDesc: "نظام رصد سيبراني متقدم صممه طارق مصطفى يعتمد على تحليل السلوك للكشف عن التهديدات.",
+                pTitle: "بروتوكول تشفير البيانات", pDesc: "يتم فحص الروابط عبر نفق مشفر AES-256 لضمان الخصوصية.",
+                resSafe: "بروتوكول آمن: مصرح به", resCrit: "تهديد سيبراني: محظور", risk: "معامل الخطورة (Risk Level)", diagnostic: "نتائج التشخيص الجنائي:", recTitle: "التوجيهات الأمنية:",
+                recSafe: "النطاق آمن. مسموح بالدخول تحت الرقابة.", recCrit: "تحذير: تم اكتشاف نشاط عدواني. يُمنع الدخول.",
+                CLEAN: "لم يتم رصد أي نشاط عدواني في الرابط.", GEOLOCATION_TRAP: "محاولة اختراق الخصوصية: الرابط يحاول الوصول لموقع GPS الخاص بك.",
+                PHISHING_CLONE: "انتحال هوية رقمية: واجهة مزيفة لسرقة بياناتك.", CAMERA_SPY: "تجسس بصري: محاولة فتح الكاميرا بدون تصريح.",
+                MALICIOUS_IP: "نطاق غير موثق: الموقع يعمل عبر IP مباشر (خطر عالي).", SHIELD: "تنبيه: محاولة إخفاء نشاط الموقع عبر التمويه."
             },
             en: {
-                hero: "Tarek Mostafa Offensive Security Intelligence",
-                total: "TOTAL FORENSIC AUDITS",
-                threats: "THREATS NEUTRALIZED",
-                acc: "ACCURACY RATE",
-                status: "AI ENGINE: ACTIVE",
-                inputLabel: "EXECUTE FORENSIC VECTOR ANALYSIS:",
-                btn: "START TACTICAL SCAN",
-                loading: "Analyzing payload and suspicious vectors...",
-                closeCam: "Terminate Camera",
-                closeBtn: "Close Report",
-                about: "SYSTEM PROTOCOL",
-                priv: "ENCRYPTION STANDARD",
-                copy: "© 2026 SECUCODE PRO • CORE BY TAREK MOSTAFA",
-                mTitle: "OPERATIONAL HANDBOOK",
-                mDesc: "Advanced cyber-monitoring system using behavior and pattern recognition to detect GPS hijacking and phishing clones.",
-                pTitle: "DATA ENCRYPTION PROTOCOL",
-                pDesc: "Links are audited via an AES-256 encrypted tunnel. No audit data is archived to ensure mission integrity.",
-                resSafe: "PROTOCOL: AUTHORIZED",
-                resCrit: "CYBER THREAT: BLOCKED",
-                risk: "RISK LEVEL INDICATOR",
-                diagnostic: "Forensic Diagnosis:",
-                recTitle: "Security Directives:",
-                recSafe: "Domain follows security standards. Entry authorized under surveillance.",
-                recCrit: "WARNING: Hostile activity detected. Do not share sensitive data.",
-                CLEAN: "No aggressive behavior identified in the link structure.",
-                GEOLOCATION_TRAP: "Privacy Intrusion: Link is attempting to hijack GPS coordinates.",
-                PHISHING_CLONE: "Digital Spoofing: Fake interface detected targeting credentials.",
-                CAMERA_SPY: "Optical Espionage: Unauthorized media access scripts identified.",
-                MALICIOUS_IP: "Untrusted Host: Direct IP-based domain detected (High Risk).",
-                SHIELD: "Alert: Obfuscation techniques detected to hide malicious activity."
+                hero: "Tarek Mostafa Offensive Security Intelligence", total: "TOTAL FORENSIC AUDITS", threats: "THREATS NEUTRALIZED", acc: "ACCURACY RATE", status: "AI ENGINE: ACTIVE",
+                inputLabel: "EXECUTE FORENSIC VECTOR ANALYSIS:", btn: "START TACTICAL SCAN", loading: "Analyzing payload and suspicious vectors...",
+                closeCam: "Terminate Camera", closeBtn: "Close Report", about: "SYSTEM PROTOCOL", priv: "ENCRYPTION STANDARD", copy: "© 2026 SECUCODE PRO • CORE BY TAREK MOSTAFA",
+                mTitle: "OPERATIONAL HANDBOOK", mDesc: "Advanced cyber-monitoring system using behavior recognition.",
+                pTitle: "ENCRYPTION PROTOCOL", pDesc: "Links audited via AES-256 tunnel.",
+                resSafe: "PROTOCOL: AUTHORIZED", resCrit: "CYBER THREAT: BLOCKED", risk: "RISK LEVEL", diagnostic: "Forensic Diagnosis:", recTitle: "Security Directives:",
+                recSafe: "Domain follows security standards.", recCrit: "WARNING: Hostile activity detected.",
+                CLEAN: "No aggressive behavior identified.", GEOLOCATION_TRAP: "GPS Hijacking Attempt Detected.",
+                PHISHING_CLONE: "Digital Spoofing: Fake interface detected.", CAMERA_SPY: "Optical Espionage: Unauthorized Camera scripts.",
+                MALICIOUS_IP: "Untrusted Host: Direct IP-based domain.", SHIELD: "Alert: Obfuscation techniques detected."
             }
         };
 
         let currentLang = 'ar';
         let html5QrCode;
 
+        // دالة الاهتزاز التكتيكية
+        function triggerVibration(type) {
+            if (navigator.vibrate) {
+                if (type === 'safe') {
+                    navigator.vibrate(100); // اهتزاز قصير واحد
+                } else if (type === 'danger') {
+                    navigator.vibrate([200, 100, 200, 100, 400]); // نبضات قوية متكررة
+                }
+            }
+        }
+
         window.toggleLang = () => {
             currentLang = currentLang === 'ar' ? 'en' : 'ar';
-            updateUI();
-        };
-
-        function updateUI() {
             const d = i18n[currentLang];
             document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
             document.documentElement.lang = currentLang;
-            document.getElementById('langBtn').innerText = currentLang === 'ar' ? 'Switch to English' : 'التحويل للعربية';
+            document.getElementById('langBtn').innerText = currentLang === 'ar' ? 'English Version' : 'النسخة العربية';
             document.getElementById('txt-hero-sub').innerText = d.hero;
             document.getElementById('txt-total-lbl').innerText = d.total;
             document.getElementById('txt-threats-lbl').innerText = d.threats;
@@ -204,10 +176,9 @@
             document.getElementById('txt-priv-desc').innerText = d.pDesc;
             document.querySelectorAll('.btn-close').forEach(b => b.innerText = d.closeBtn);
             lucide.createIcons();
-        }
+        };
 
-        // Initialize UI on first load
-        updateUI();
+        window.toggleLang();
 
         window.openScanner = async function() {
             document.getElementById('scannerModal').classList.add('active');
@@ -227,36 +198,17 @@
 
         onValue(ref(db, 'stats'), (s) => {
             const d = s.val() || { clicks: 0, threats: 0 };
-            document.getElementById('totalScanned').innerText = d.clicks.toLocaleString().padStart(4, '0');
-            document.getElementById('threatsDetected').innerText = d.threats.toLocaleString().padStart(4, '0');
+            document.getElementById('totalScanned').innerText = d.clicks.toString().padStart(4, '0');
+            document.getElementById('threatsDetected').innerText = d.threats.toString().padStart(4, '0');
         });
-
-        // Deep Behavioral Analysis Engine
-        function analyzeHeuristics(url) {
-            const lowUrl = url.toLowerCase();
-            const findings = [];
-            const threatMap = {
-                PHISHING: /(login|verify|auth|wallet|bank|account|secure|signin|google|facebook|instagram|crypto)/i,
-                GEO: /(location|gps|track|map|coords|find)/i,
-                SPY: /(cam|mic|stream|upload|grabber|spy)/i
-            };
-            
-            if (threatMap.PHISHING.test(lowUrl)) findings.push("PHISHING_CLONE");
-            if (threatMap.GEO.test(lowUrl)) findings.push("GEOLOCATION_TRAP");
-            if (threatMap.SPY.test(lowUrl)) findings.push("CAMERA_SPY");
-            if (/(\d{1,3}\.){3}\d{1,3}/.test(url)) findings.push("MALICIOUS_IP");
-            
-            return findings;
-        }
 
         window.runAnalysis = async function() {
             const input = document.getElementById('urlInput');
             const url = input.value.trim();
-            if(!url) { input.classList.add('border-red-500'); return; }
+            if(!url) return;
             
             const loader = document.getElementById('loader');
             const resultsArea = document.getElementById('resultsArea');
-            const progress = document.getElementById('progressBar');
             document.getElementById('loaderStatus').innerText = i18n[currentLang].loading;
             
             resultsArea.classList.add('hidden');
@@ -271,7 +223,7 @@
                 const data = await res.json();
                 runTransaction(ref(db, 'stats/clicks'), (c) => (c || 0) + 1);
                 renderResults(data, url);
-            } catch (e) { alert("ERROR: Uplink failed. Check connection."); }
+            } catch (e) { alert("ERROR: Uplink failed."); }
             finally { loader.classList.add('hidden'); }
         };
 
@@ -280,60 +232,52 @@
             area.classList.remove('hidden');
             const d = i18n[currentLang];
             
+            let riskPoints = data.points || 0;
             let violation = data.violation_key;
-            let riskPoints = Math.min(data.points || 0, 100);
-            const heuristics = analyzeHeuristics(originalUrl);
-
-            // AI Enhancement: Force detect based on patterns if score is too low
-            if (heuristics.length > 0 && riskPoints < 60) {
-                riskPoints = Math.max(riskPoints + 40, 85); 
-                violation = heuristics[0];
+            
+            // AI Heuristics Check
+            if (/(login|verify|gps|track|cam)/i.test(originalUrl) && riskPoints < 60) {
+                riskPoints = 85; 
+                violation = "SHIELD";
             }
 
             const isCrit = riskPoints > 60;
             const themeColor = isCrit ? '#ef4444' : '#10b981';
+
+            // تفعيل الاهتزاز بناءً على النتيجة
+            triggerVibration(isCrit ? 'danger' : 'safe');
+
             if (isCrit) runTransaction(ref(db, 'stats/threats'), (t) => (t || 0) + 1);
 
             area.innerHTML = `
-                <div class="grid lg:grid-cols-5 gap-6 animate-in slide-in-from-bottom duration-500">
-                    <div class="lg:col-span-3 glass p-8 md:p-12 ${isCrit ? 'border-red-500/40 shadow-red-900/10 shadow-2xl' : 'border-emerald-500/40'} relative overflow-hidden">
+                <div class="grid lg:grid-cols-5 gap-6 animate-in zoom-in-95 duration-500">
+                    <div class="lg:col-span-3 glass p-8 md:p-12 ${isCrit ? 'glow-red' : 'border-emerald-500/30'} relative overflow-hidden">
                         <div class="relative z-10">
-                            <div class="flex items-center gap-6 mb-10">
-                                <div class="p-5 rounded-2xl ${isCrit ? 'bg-red-500/10 border border-red-500/30' : 'bg-emerald-500/10 border border-emerald-500/30'}">
-                                    <i data-lucide="${isCrit ? 'alert-triangle' : 'shield-check'}" class="w-10 h-10" style="color: ${themeColor}"></i>
+                            <div class="flex items-center gap-6 mb-8">
+                                <div class="p-4 rounded-2xl ${isCrit ? 'bg-red-500/10' : 'bg-emerald-500/10'}">
+                                    <i data-lucide="${isCrit ? 'shield-off' : 'shield-check'}" class="w-10 h-10" style="color: ${themeColor}"></i>
                                 </div>
                                 <div>
-                                    <h2 class="text-2xl font-black uppercase tracking-tighter" style="color: ${themeColor}">${isCrit ? d.resCrit : d.resSafe}</h2>
-                                    <p class="text-[9px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Sector Audit: ${new Date().toLocaleTimeString()}</p>
+                                    <h2 class="text-2xl font-black uppercase italic" style="color: ${themeColor}">${isCrit ? d.resCrit : d.resSafe}</h2>
+                                    <p class="text-[9px] text-slate-500 font-bold uppercase mt-1">Audit Protocol Verified</p>
                                 </div>
                             </div>
-                            
-                            <div class="bg-slate-900/50 border-r-4 ${isCrit ? 'border-red-600' : 'border-emerald-600'} p-6 rounded-xl mb-8">
-                                <h3 class="text-[10px] font-black text-slate-500 mb-3 uppercase tracking-widest">${d.diagnostic}</h3>
-                                <p class="text-white text-lg md:text-xl font-black leading-relaxed">${d[violation] || d.SHIELD}</p>
+                            <div class="bg-black/40 border-r-4 ${isCrit ? 'border-red-600' : 'border-emerald-600'} p-6 rounded-xl mb-6">
+                                <h3 class="text-[9px] font-black text-slate-500 mb-2 uppercase tracking-widest">${d.diagnostic}</h3>
+                                <p class="text-white text-lg font-black">${d[violation] || d.SHIELD}</p>
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
-                                <div class="glass p-4"><span class="text-[8px] text-slate-500 uppercase block mb-1">Intelligence Status</span><span class="text-[10px] font-black ${isCrit?'text-red-500':'text-emerald-500'}">${isCrit?'THREAT MITIGATION REQUIRED':'CLEARANCE GRANTED'}</span></div>
-                                <div class="glass p-4"><span class="text-[8px] text-slate-500 uppercase block mb-1">Encryption Mode</span><span class="text-[10px] font-black text-blue-500 tracking-widest uppercase">AES-256 tactical</span></div>
-                            </div>
-                        </div>
-                        <div class="mt-12 flex items-end justify-between border-t border-white/5 pt-8">
-                            <div><span class="text-[10px] text-slate-500 uppercase font-black">${d.risk}</span><p class="text-7xl font-black font-mono leading-none mt-2" style="color: ${themeColor}">${riskPoints}%</p></div>
-                            <div class="flex flex-col items-end gap-2">
-                                <i data-lucide="binary" class="w-10 h-10 text-slate-800"></i>
-                                <span class="text-[8px] text-slate-600 font-black">CORE VER: 7.0.4</span>
+                                <div class="glass p-4"><span class="text-[8px] text-slate-500 uppercase block mb-1">Risk Probability</span><span class="text-[14px] font-black ${isCrit?'text-red-500':'text-emerald-500'} font-mono">${riskPoints}%</span></div>
+                                <div class="glass p-4"><span class="text-[8px] text-slate-500 uppercase block mb-1">Encryption Status</span><span class="text-[10px] font-black text-blue-400">AES-256 ACTIVE</span></div>
                             </div>
                         </div>
                     </div>
-
                     <div class="lg:col-span-2 space-y-4">
-                        <div class="glass p-4 h-[320px] relative overflow-hidden group shadow-2xl border-white/5">
-                            <p class="text-[9px] font-black text-slate-500 uppercase mb-3 tracking-widest">Tactical Scan Visual:</p>
-                            <img id="resImg" src="${data.screenshot || ''}" class="w-full h-full object-cover rounded-xl transition-all duration-[4s] group-hover:scale-125 grayscale hover:grayscale-0">
+                        <div class="glass p-4 h-[280px] overflow-hidden group">
+                            <img id="resImg" src="${data.screenshot || ''}" class="w-full h-full object-cover rounded-xl transition-all duration-[3s] group-hover:scale-110">
                         </div>
                         <div class="glass p-6 border-blue-500/10">
-                            <p class="text-[10px] font-black text-blue-500 uppercase mb-3 tracking-widest">${d.recTitle}</p>
+                            <p class="text-[10px] font-black text-blue-500 uppercase mb-2 tracking-widest">${d.recTitle}</p>
                             <p class="text-xs text-slate-300 font-bold leading-relaxed">${isCrit ? d.recCrit : d.recSafe}</p>
                         </div>
                     </div>
