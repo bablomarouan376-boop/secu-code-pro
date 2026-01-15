@@ -6,8 +6,8 @@
     <title>SecuCode Pro | Tarek Mostafa</title>
     
     <link rel="manifest" href="/static/manifest.json">
-    <link rel="icon" type="image/png" href="/static/logo.png">
-    <link rel="apple-touch-icon" href="/static/logo.png">
+    <link rel="icon" type="image/jpeg" href="/static/og-image.jpg">
+    <link rel="apple-touch-icon" href="/static/og-image.jpg">
     <meta name="theme-color" content="#020617">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,8 +34,8 @@
         
         <header class="flex flex-col md:flex-row justify-between items-center gap-6 glass p-6 shadow-2xl">
             <div class="flex items-center gap-5">
-                <div class="p-4 bg-blue-600/20 rounded-2xl border border-blue-500/30">
-                    <img src="/static/logo.png" alt="Logo" class="w-10 h-10 object-contain">
+                <div class="p-2 bg-blue-600/10 rounded-2xl border border-blue-500/20 overflow-hidden">
+                    <img src="/static/og-image.jpg" alt="Logo" class="w-12 h-12 object-cover rounded-lg">
                 </div>
                 <div>
                     <h1 class="text-3xl font-black italic uppercase tracking-tighter">SecuCode <span class="text-blue-600">Pro</span></h1>
@@ -46,15 +46,15 @@
         </header>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass p-5 border-l-4 border-l-blue-500 shadow-lg">
+            <div class="glass p-5 border-l-4 border-l-blue-500">
                 <p id="txt-total-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1 tracking-widest"></p>
                 <span id="totalScanned" class="text-2xl font-black font-mono">0000</span>
             </div>
-            <div class="glass p-5 border-l-4 border-l-red-600 shadow-lg">
+            <div class="glass p-5 border-l-4 border-l-red-600">
                 <p id="txt-threats-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1 tracking-widest"></p>
                 <span id="threatsDetected" class="text-2xl font-black font-mono text-red-500">0000</span>
             </div>
-            <div class="glass p-5 shadow-lg"><p id="txt-accuracy-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1 tracking-widest"></p><span class="text-2xl font-black font-mono text-emerald-500">100.0%</span></div>
+            <div class="glass p-5"><p id="txt-accuracy-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1 tracking-widest"></p><span class="text-2xl font-black font-mono text-emerald-500">100.0%</span></div>
             <div class="glass p-5 flex items-center justify-center"><span id="txt-status" class="px-4 py-1 bg-blue-600/10 text-blue-400 text-[10px] font-black rounded-full uppercase border border-blue-500/20"></span></div>
         </div>
 
@@ -89,7 +89,7 @@
 
         <div id="resultsArea" class="hidden space-y-6"></div>
 
-        <footer class="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">
+        <footer class="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] text-slate-500 font-black uppercase">
             <div class="flex gap-10">
                 <button onclick="openModal('aboutModal')" id="txt-footer-about" class="hover:text-blue-500"></button>
                 <button onclick="openModal('privModal')" id="txt-footer-priv" class="hover:text-red-500"></button>
@@ -112,7 +112,7 @@
 
         const i18n = {
             ar: {
-                hero: "المطور الرئيسي: طارق مصطفى • الإصدار 1.2",
+                hero: "المطور الرئيسي: طارق مصطفى • الإصدار 1.3",
                 total: "إجمالي التحقيقات الرقمية", threats: "التهديدات المحيدة", acc: "دقة التحليل الهيكلي", status: "نظام الذكاء: فعال",
                 inputLabel: "تحليل متجهات البيانات للهدف:", inputSub: "نظام الاستخبارات الجنائية - طارق مصطفى 2026",
                 btn: "إطلاق الفحص الهجومي", clear: "تطهير النواقل", loading: "جاري تحليل بصمة النطاق...",
@@ -122,7 +122,7 @@
                 mAboutTitle: "بروتوكول SecuCode Pro",
                 mAboutDesc: "نظام جنائي رقمي متطور يعتمد على تحليل السلوك النمطي للروابط. تم تطوير المحرك بواسطة طارق مصطفى للكشف عن محاولات التصيد والتمويه السيبراني.",
                 mPrivTitle: "معايير التشفير والخصوصية",
-                mPrivDesc: "كافة الفحوصات تتم عبر قنوات مشفرة 256-bit. يتم حماية خصوصية المستخدم بشكل كامل.",
+                mPrivDesc: "كافة الفحوصات تتم عبر قنوات مشفرة 256-bit. حماية خصوصية المستخدم هي الأولوية القصوى لدينا.",
                 sig: "بصمة التشفير: TAREK MOSTAFA CORE", risk: "معامل الخطورة", mode: "النمط التشغيلي", diagnostic: "التشخيص الفني:", recTitle: "التوجيهات الأمنية:",
                 resSafe: "بروتوكول موثوق: مصرح به", resCrit: "تهديد سيبراني محتمل",
                 OFFICIAL_TRUST: "تم التحقق من الهوية: هذا النطاق يتبع الخوادم الرسمية الموثوقة عالمياً.",
@@ -131,7 +131,7 @@
                 watermark: "بواسطة طارق مصطفى"
             },
             en: {
-                hero: "Lead Developer: Tarek Mostafa • V1.2",
+                hero: "Lead Developer: Tarek Mostafa • V1.3",
                 total: "TOTAL AUDITS", threats: "THREATS NEUTRALIZED", acc: "ACCURACY", status: "AI SYSTEM: ACTIVE",
                 inputLabel: "EXECUTE VECTOR ANALYSIS:", inputSub: "INTEL CORE: TAREK MOSTAFA 2026",
                 btn: "START SCAN", clear: "PURGE VECTORS", loading: "Analyzing fingerprint...",
@@ -141,7 +141,7 @@
                 mAboutTitle: "SecuCode Pro Protocol",
                 mAboutDesc: "Advanced digital forensic system developed by Tarek Mostafa.",
                 mPrivTitle: "Encryption & Privacy",
-                mPrivDesc: "256-bit encrypted channels. Full user privacy protected.",
+                mPrivDesc: "256-bit encrypted channels. User privacy is our top priority.",
                 sig: "SIGNATURE: TAREK MOSTAFA CORE", risk: "RISK FACTOR", mode: "OPERATIONAL MODE", diagnostic: "TECHNICAL DIAGNOSIS:", recTitle: "SECURITY DIRECTIVES:",
                 resSafe: "TRUSTED PROTOCOL: AUTHORIZED", resCrit: "CYBER THREAT DETECTED",
                 OFFICIAL_TRUST: "Identity Verified: Domain belongs to globally trusted servers.",
@@ -262,8 +262,8 @@
                 <div class="grid lg:grid-cols-5 gap-8 animate-in zoom-in-95 duration-500">
                     <div class="lg:col-span-3 glass p-10 ${isCrit ? 'glow-red' : (isOfficial ? 'glow-green' : '')}" style="border-top: 4px solid ${theme}">
                         <div class="flex items-center gap-6 mb-10">
-                            <div class="p-5 rounded-3xl border border-white/5" style="background: ${theme}1a">
-                                <img src="/static/logo.png" class="w-12 h-12 object-contain">
+                            <div class="p-2 rounded-2xl border border-white/5" style="background: ${theme}1a">
+                                <img src="/static/og-image.jpg" class="w-14 h-14 object-cover rounded-xl shadow-lg">
                             </div>
                             <div>
                                 <h2 class="text-3xl font-black italic uppercase" style="color: ${theme}">${statusTitle}</h2>
@@ -275,16 +275,19 @@
                             <p class="text-white text-xl font-black italic leading-relaxed">${diagnosticText}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-6">
-                            <div class="glass p-5 shadow-inner text-center"><span class="text-[9px] text-slate-500 uppercase block font-black">${d.risk}</span><span class="text-2xl font-black font-mono" style="color: ${theme}">${risk}%</span></div>
-                            <div class="glass p-5 shadow-inner text-center"><span class="text-[9px] text-slate-500 uppercase block font-black">${d.mode}</span><span class="text-[10px] font-black text-blue-500 uppercase">${isOfficial ? 'SECURE_CORE' : 'FORENSIC_V1.2'}</span></div>
+                            <div class="glass p-5 shadow-inner text-center"><span class="text-[9px] text-slate-500 uppercase block font-black mb-1">${d.risk}</span><span class="text-2xl font-black font-mono" style="color: ${theme}">${risk}%</span></div>
+                            <div class="glass p-5 shadow-inner text-center"><span class="text-[9px] text-slate-500 uppercase block font-black mb-1">${d.mode}</span><span class="text-[10px] font-black text-blue-500 uppercase">${isOfficial ? 'SECURE_CORE' : 'FORENSIC_V1.3'}</span></div>
                         </div>
                     </div>
                     <div class="lg:col-span-2 space-y-6">
                         <div class="glass p-5 h-[320px] overflow-hidden relative">
-                            <img id="resImg" src="https://s0.wp.com/mshots/v1/${encodeURIComponent(url)}?w=800&h=600" class="w-full h-full object-cover rounded-2xl" onerror="this.src='/static/logo.png'">
+                            <img id="resImg" src="https://s0.wp.com/mshots/v1/${encodeURIComponent(url)}?w=800&h=600" class="w-full h-full object-cover rounded-2xl" onerror="this.src='/static/og-image.jpg'">
                             <div class="watermark uppercase tracking-widest">${d.watermark}</div>
                         </div>
-                        <div class="glass p-8 border-blue-500/10"><p class="text-[11px] font-black text-blue-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> ${d.recTitle}</p><p class="text-sm text-slate-200 font-bold leading-relaxed">${adviceText}</p></div>
+                        <div class="glass p-8 border-blue-500/10">
+                            <p class="text-[11px] font-black text-blue-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> ${d.recTitle}</p>
+                            <p class="text-sm text-slate-200 font-bold leading-relaxed">${adviceText}</p>
+                        </div>
                     </div>
                 </div>`;
             lucide.createIcons();
