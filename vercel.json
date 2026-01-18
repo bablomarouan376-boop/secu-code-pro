@@ -1,10 +1,22 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/robots.txt", "destination": "/robots.txt" },
-    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-    { "source": "/sw.js", "destination": "/sw.js" },
-    { "source": "/static/(.*)", "destination": "/static/$1" },
-    { "source": "/(.*)", "destination": "/index" }
-  ]
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ],
+  "env": {
+    "TELEGRAM_TOKEN": "@telegram_token",
+    "CHAT_ID": "@chat_id",
+    "VIRUSTOTAL_API_KEY": "@virustotal_api_key",
+    "OPENAI_API_KEY": "@openai_api_key",
+    "FIREBASE_CREDENTIALS": "@firebase_credentials_json"
+  }
 }
