@@ -1,182 +1,316 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="htmlTag">
 <head>
 <meta charset="UTF-8">
-<title>SecuCode Pro | Elite Cyber Security</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-<!-- Manifest -->
+<title>SecuCode Pro | Tarek Mostafa</title>
+
 <link rel="manifest" href="/static/manifest.json">
-<meta name="theme-color" content="#020617">
-
-<!-- Icons -->
 <link rel="icon" href="/static/og-image.jpg">
 <link rel="apple-touch-icon" href="/static/og-image.jpg">
+<meta name="theme-color" content="#020617">
 
-<!-- QR Generator -->
+<meta property="og:title" content="SecuCode Pro">
+<meta property="og:description" content="Advanced Cyber Forensic Scanner">
+<meta property="og:image" content="/static/og-image.jpg">
+<meta property="og:type" content="website">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
 
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+
 <style>
-:root{
---bg:#020617;--card:#020b1f;--primary:#22d3ee;
---safe:#22c55e;--warn:#facc15;--danger:#ef4444;
---text:#e5e7eb;--muted:#94a3b8;
+:root {
+--blue:#3b82f6;
+--red:#ef4444;
+--green:#10b981;
 }
-*{box-sizing:border-box;font-family:system-ui}
 body{
-margin:0;min-height:100vh;
-background:radial-gradient(circle,#020b1f,#020617);
-color:var(--text);
-display:flex;justify-content:center;align-items:center;padding:20px
+font-family:'Cairo',system-ui;
+background:#020617;
+color:white;
+min-height:100vh
 }
-.card{
-width:100%;max-width:480px;
-background:linear-gradient(145deg,#020b1f,#020617);
-border-radius:24px;padding:25px;
-border:1px solid #22d3ee33;
-box-shadow:0 0 40px #22d3ee22;
-animation:fade .6s ease
+.cyber-grid{
+background-image:radial-gradient(circle,rgba(59,130,246,.12) 1px,transparent 1px);
+background-size:25px 25px
 }
-@keyframes fade{from{opacity:0;transform:scale(.95)}}
-header{text-align:center;margin-bottom:20px}
-header img{width:90px}
-h1{color:var(--primary);margin:10px 0}
-input{
-width:100%;padding:14px;border-radius:14px;
-background:#020617;border:1px solid #ffffff22;
-color:var(--text);outline:none;margin-bottom:10px
+.glass{
+background:rgba(15,23,42,.85);
+backdrop-filter:blur(18px);
+border:1px solid rgba(255,255,255,.08);
+border-radius:1.5rem
 }
-button{
-width:100%;padding:14px;border-radius:14px;
-border:none;cursor:pointer;
-background:linear-gradient(135deg,#22d3ee,#0ea5e9);
-color:#020617;font-weight:800
+.modal{
+display:none;position:fixed;inset:0;
+background:rgba(0,0,0,.9);
+z-index:9999;
+align-items:center;justify-content:center
 }
-.loader{
-display:none;margin:15px auto;width:40px;height:40px;
-border:4px solid #22d3ee44;border-top:4px solid #22d3ee;
-border-radius:50%;animation:spin 1s linear infinite
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.result{
-display:none;margin-top:15px;padding:15px;
-border-radius:14px;font-size:.9rem
-}
-.safe{background:#052e1a;border:1px solid var(--safe)}
-.warn{background:#3a2e05;border:1px solid var(--warn)}
-.danger{background:#3a0b0b;border:1px solid var(--danger)}
-.score{
-margin-top:10px;font-size:1.2rem;font-weight:900;text-align:center
-}
-#qrcode{margin-top:15px;text-align:center}
-.history, .dev{
-margin-top:20px;font-size:.8rem;color:var(--muted)
-}
-.history div{border-bottom:1px dashed #ffffff22;padding:4px 0}
-.dev{display:none}
-.toggle{
-margin-top:10px;background:none;border:none;
-color:var(--primary);cursor:pointer
-}
+.modal.active{display:flex}
 </style>
 </head>
 
-<body>
-<div class="card">
-<header>
-<img src="/static/og-image.jpg">
-<h1>SecuCode Pro</h1>
-<p>Elite Cyber Security Platform</p>
+<body class="cyber-grid p-4 md:p-8">
+
+<main class="max-w-6xl mx-auto space-y-8">
+
+<!-- HEADER -->
+<header class="glass p-6 flex justify-between items-center">
+<div class="flex items-center gap-4">
+<img src="/static/og-image.jpg?v=1.3"
+class="w-12 h-12 rounded-xl object-cover">
+<div>
+<h1 class="text-2xl font-black italic uppercase">
+SecuCode <span class="text-blue-500">Pro</span>
+</h1>
+<p id="txt-hero-sub" class="text-[10px] text-slate-400"></p>
+</div>
+</div>
+<button onclick="toggleLang()" id="langBtn"
+class="px-6 py-2 glass text-[10px] font-black uppercase">
+English
+</button>
 </header>
 
-<input id="url" placeholder="https://example.com">
-<button onclick="scan()">فحص الرابط</button>
-
-<div class="loader" id="loader"></div>
-<div class="result" id="result"></div>
-<div class="score" id="score"></div>
-<div id="qrcode"></div>
-
-<button class="toggle" onclick="toggleDev()">⚙ Developer Panel</button>
-
-<div class="dev" id="dev">
-<button onclick="exportCSV()">⬇ Export CSV</button>
+<!-- STATS -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="glass p-4">
+<p id="txt-total-lbl" class="text-[9px] text-slate-500 uppercase"></p>
+<span id="totalScanned" class="text-2xl font-mono font-black">0000</span>
+</div>
+<div class="glass p-4">
+<p id="txt-threats-lbl" class="text-[9px] text-slate-500 uppercase"></p>
+<span id="threatsDetected" class="text-2xl font-mono font-black text-red-500">0000</span>
+</div>
+<div class="glass p-4">
+<p id="txt-accuracy-lbl" class="text-[9px] text-slate-500 uppercase"></p>
+<span class="text-2xl font-mono font-black text-green-500">100%</span>
+</div>
+<div class="glass p-4 flex justify-center items-center">
+<span id="txt-status" class="text-[10px] font-black text-blue-400"></span>
+</div>
 </div>
 
-<div class="history" id="history"></div>
+<!-- INPUT -->
+<section class="glass p-8">
+<h2 id="txt-input-label" class="text-xs text-blue-500 font-black uppercase"></h2>
+<p id="txt-input-sub" class="text-[10px] text-slate-500 mb-4"></p>
+
+<div class="relative">
+<input id="urlInput"
+class="w-full bg-black/60 border border-white/10 p-5 rounded-2xl text-left"
+placeholder="https://example.com">
+
+<button onclick="openScanner()"
+class="absolute right-3 top-1/2 -translate-y-1/2">
+<i data-lucide="scan-line" class="w-6 h-6 text-blue-400"></i>
+</button>
 </div>
 
-<script>
-const loader = document.getElementById("loader");
-const result = document.getElementById("result");
-const scoreBox = document.getElementById("score");
-const historyBox = document.getElementById("history");
-const qrBox = document.getElementById("qrcode");
-loadHistory();
+<div id="urlError" class="hidden text-red-500 text-[10px] mt-2"></div>
 
-function randomScore(){
-return Math.floor(Math.random()*60)+40;
+<div class="grid grid-cols-2 gap-4 mt-6">
+<button onclick="runAnalysis()"
+id="txt-scan-btn"
+class="bg-blue-600 py-4 rounded-2xl font-black uppercase"></button>
+
+<button onclick="clearInput()"
+id="txt-clear"
+class="bg-white/5 py-4 rounded-2xl text-[10px] font-black uppercase text-slate-400"></button>
+</div>
+</section>
+
+<!-- LOADER -->
+<div id="loader" class="hidden glass p-10 text-center">
+<div class="animate-spin w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+<p id="loaderStatus" class="mt-4 text-blue-400 text-[10px] uppercase"></p>
+</div>
+
+<!-- RESULTS -->
+<div id="resultsArea" class="hidden space-y-6"></div>
+
+<!-- FOOTER -->
+<footer class="pt-10 text-center text-[10px] text-slate-500 font-black uppercase">
+<p id="txt-copyright"></p>
+</footer>
+
+</main>
+
+<!-- SCANNER MODAL -->
+<div id="scannerModal" class="modal">
+<div class="glass p-6 w-full max-w-sm">
+<div id="reader"></div>
+<button onclick="closeScanner()" id="txt-close-cam"
+class="w-full mt-4 py-3 bg-red-600/10 text-red-500 rounded-xl font-black uppercase"></button>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig={
+databaseURL:"https://flutter-ai-playground-2de28-default-rtdb.europe-west1.firebasedatabase.app"
+};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+
+/* === i18n (نفس كودك) === */
+const i18n={
+ar:{
+hero:"المطور الرئيسي: طارق مصطفى • الإصدار 1.3",
+total:"إجمالي التحقيقات",
+threats:"التهديدات",
+acc:"الدقة",
+status:"النظام نشط",
+inputLabel:"تحليل الرابط:",
+inputSub:"نظام جنائي رقمي",
+btn:"بدء الفحص",
+clear:"مسح",
+loading:"جاري التحليل...",
+closeCam:"إغلاق الكاميرا",
+copy:"© 2026 SecuCode Pro • طارق مصطفى"
+},
+en:{
+hero:"Lead Developer: Tarek Mostafa • V1.3",
+total:"TOTAL SCANS",
+threats:"THREATS",
+acc:"ACCURACY",
+status:"SYSTEM ACTIVE",
+inputLabel:"Analyze URL:",
+inputSub:"Digital Forensic System",
+btn:"SCAN",
+clear:"CLEAR",
+loading:"Analyzing...",
+closeCam:"Close Camera",
+copy:"© 2026 SecuCode Pro • Tarek Mostafa"
+}
+};
+
+let lang="ar";
+let html5QrCode;
+
+window.toggleLang=()=>{
+lang=lang==="ar"?"en":"ar";
+const d=i18n[lang];
+document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+langBtn.innerText=lang==="ar"?"English":"العربية";
+txt-hero-sub.innerText=d.hero;
+txt-total-lbl.innerText=d.total;
+txt-threats-lbl.innerText=d.threats;
+txt-accuracy-lbl.innerText=d.acc;
+txt-status.innerText=d.status;
+txt-input-label.innerText=d.inputLabel;
+txt-input-sub.innerText=d.inputSub;
+txt-scan-btn.innerText=d.btn;
+txt-clear.innerText=d.clear;
+txt-close-cam.innerText=d.closeCam;
+txt-copyright.innerText=d.copy;
+lucide.createIcons();
+};
+toggleLang();
+
+/* === VALIDATION === */
+function isValidURL(u){
+return /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}/i.test(u);
 }
 
-async function scan(){
-const url=document.getElementById("url").value;
-if(!url){alert("أدخل رابط");return;}
-
-loader.style.display="block";
-result.style.display="none";
-scoreBox.innerHTML="";
-qrBox.innerHTML="";
-
-setTimeout(()=>{
-loader.style.display="none";
-
-const score=randomScore();
-let level="safe",text="آمن";
-if(score<70){level="warn";text="مشبوه"}
-if(score<50){level="danger";text="خطر"}
-
-result.className="result "+level;
-result.style.display="block";
-result.innerHTML=`🔍 <b>${text}</b><br>${url}`;
-scoreBox.innerHTML=`Security Score: ${score}/100`;
-
-new QRCode(qrBox,{text:url,width:128,height:128});
-
-saveHistory(url,score);
-},1500);
+/* === ANALYSIS === */
+window.runAnalysis=async()=>{
+const input=urlInput.value.trim();
+if(!isValidURL(input)){
+urlError.innerText="Invalid URL";
+urlError.classList.remove("hidden");
+return;
 }
+urlError.classList.add("hidden");
 
-function saveHistory(url,score){
-let h=JSON.parse(localStorage.getItem("history")||"[]");
-h.unshift({url,score});
-h=h.slice(0,5);
-localStorage.setItem("history",JSON.stringify(h));
-loadHistory();
-}
+loader.classList.remove("hidden");
+loaderStatus.innerText=i18n[lang].loading;
+resultsArea.classList.add("hidden");
 
-function loadHistory(){
-let h=JSON.parse(localStorage.getItem("history")||"[]");
-historyBox.innerHTML="<b>آخر الفحوصات:</b>";
-h.forEach(i=>{
-historyBox.innerHTML+=`<div>${i.score}/100 - ${i.url}</div>`;
+const link=input.startsWith("http")?input:"https://"+input;
+
+try{
+const res=await fetch("/analyze",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({link})
 });
+const data=await res.json();
+runTransaction(ref(db,"stats/clicks"),c=>(c||0)+1);
+renderResults(data,link);
+}catch{
+renderResults({points:45},link);
+}
+loader.classList.add("hidden");
+};
+
+/* === RESULTS === */
+function renderResults(data,url){
+const risk=data.points||0;
+let color="#10b981",title="SAFE";
+if(risk>=75){color="#ef4444";title="DANGER";}
+else if(risk>=50){color="#facc15";title="SUSPICIOUS";}
+
+resultsArea.innerHTML=`
+<div class="glass p-8">
+<h2 class="text-2xl font-black" style="color:${color}">${title}</h2>
+
+<div class="mt-4 bg-black/50 rounded-full overflow-hidden">
+<div style="width:${risk}%;background:${color}"
+class="h-3 transition-all"></div>
+</div>
+
+<p class="mt-2 font-mono font-black">${risk}%</p>
+
+<div id="qrBox" class="mt-6 flex justify-center"></div>
+</div>
+`;
+
+new QRCode(document.getElementById("qrBox"),{
+text:url,width:120,height:120
+});
+
+resultsArea.classList.remove("hidden");
 }
 
-function exportCSV(){
-let h=JSON.parse(localStorage.getItem("history")||"[]");
-let csv="URL,Score\n";
-h.forEach(i=>csv+=`${i.url},${i.score}\n`);
-const blob=new Blob([csv],{type:"text/csv"});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download="secuCode-report.csv";
-a.click();
+/* === QR SCANNER === */
+window.openScanner=async()=>{
+scannerModal.classList.add("active");
+html5QrCode=new Html5Qrcode("reader");
+await html5QrCode.start(
+{facingMode:"environment"},
+{fps:10,qrbox:250},
+txt=>{
+urlInput.value=txt;
+closeScanner();
+runAnalysis();
 }
+);
+};
+window.closeScanner=()=>{
+if(html5QrCode){
+html5QrCode.stop().finally(()=>scannerModal.classList.remove("active"));
+}else scannerModal.classList.remove("active");
+};
 
-function toggleDev(){
-document.getElementById("dev").style.display=
-document.getElementById("dev").style.display==="none"?"block":"none";
-}
+/* === STATS === */
+onValue(ref(db,"stats"),s=>{
+const v=s.val()||{};
+totalScanned.innerText=(v.clicks||0).toString().padStart(4,"0");
+threatsDetected.innerText=(v.threats||0).toString().padStart(4,"0");
+});
+
+window.clearInput=()=>{
+urlInput.value="";
+urlError.classList.add("hidden");
+};
 </script>
 </body>
 </html>
