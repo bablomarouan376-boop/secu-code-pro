@@ -1,10 +1,11 @@
 {
-  "name": "SecuCode Pro | Elite Security",
+  "name": "SecuCode Pro",
   "short_name": "SecuCode",
-  "description": "نظام طارق مصطفى المتطور لفحص الروابط بالذكاء الاصطناعي",
+  "description": "Advanced Cyber Forensic URL Analysis System by Tarek Mostafa",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "/?source=pwa",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#020617",
@@ -12,32 +13,16 @@
   "icons": [
     {
       "src": "/static/og-image.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/og-image.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
-    },
-    {
-      "src": "/static/og-image.jpg",
-      "sizes": "192x192",
-      "type": "image/jpeg"
-    },
-    {
-      "src": "/static/og-image.jpg",
-      "sizes": "384x384",
-      "type": "image/jpeg"
-    },
-    {
-      "src": "/static/og-image.jpg",
-      "sizes": "144x144",
-      "type": "image/jpeg"
     }
   ],
-  "categories": ["security", "utilities"],
-  "screenshots": [
-    {
-      "src": "/static/screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png"
-    }
-  ]
+  "categories": ["security", "utilities", "technology"]
 }
