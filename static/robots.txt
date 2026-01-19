@@ -1,4 +1,3 @@
-# robots.txt (مصحح ومنفصل عن vercel.json)
 User-agent: *
 Allow: /
 
