@@ -1,271 +1,162 @@
-<!-- templates/index.html (Updated with: progress bar, dark/light mode, share buttons, history dashboard, charts with Chart.js, more detailed results) -->
-
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlTag">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SecuCode Pro | Tarek Mostafa</title>
-    
-    <link rel="manifest" href="/static/manifest.json">
-    <link rel="icon" type="image/jpeg" href="/static/og-image.jpg">
-    <link rel="apple-touch-icon" href="/static/og-image.jpg">
-    <meta name="theme-color" content="#020617">
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Added for charts -->
-    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --accent-blue: #3b82f6; --accent-red: #ef4444; --accent-green: #10b981; }
-        body { font-family: 'Cairo', 'Inter', sans-serif; min-height: 100vh; }
-        .cyber-grid { background-image: radial-gradient(circle, rgba(59, 130, 246, 0.1) 1px, transparent 1px); background-size: 25px 25px; }
-        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.5rem; }
-        .modal { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.95); align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
-        .modal.active { display: flex; opacity: 1; }
-        .watermark { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.8); padding: 5px 12px; border-radius: 10px; font-size: 10px; font-weight: 900; z-index: 20; }
-        .glow-red { box-shadow: 0 0 50px rgba(239, 68, 68, 0.2); }
-        .glow-green { box-shadow: 0 0 50px rgba(16, 185, 129, 0.2); }
-        .error-shake { animation: shake 0.4s ease-in-out; border-color: var(--accent-red) !important; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-        
-        /* Dark/Light mode */
-        body.dark { background: #020617; color: white; }
-        body.light { background: #f8fafc; color: #020617; }
-        body.light .glass { background: rgba(255, 255, 255, 0.85); border: 1px solid rgba(0, 0, 0, 0.08); }
-        body.light .cyber-grid { background-image: radial-gradient(circle, rgba(59, 130, 246, 0.05) 1px, transparent 1px); }
+        body { font-family: 'Cairo', sans-serif; transition: 0.3s; }
+        .dark { background: #020617; color: white; }
+        .light { background: #f8fafc; color: #020617; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; }
+        .light .glass { background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(0,0,0,0.1); }
     </style>
 </head>
-<body class="cyber-grid p-4 md:p-8 dark"> <!-- Default dark -->
-    <main class="max-w-6xl mx-auto space-y-8">
-        
-        <header class="flex flex-col md:flex-row justify-between items-center gap-6 glass p-6 shadow-2xl">
-            <div class="flex items-center gap-5">
-                <div class="p-2 bg-blue-600/10 rounded-2xl border border-blue-500/20 overflow-hidden">
-                    <img src="/static/og-image.jpg" alt="Logo" class="w-12 h-12 object-cover rounded-lg">
+<body class="dark p-4 md:p-10">
+    <div class="max-w-5xl mx-auto space-y-6">
+        <header class="glass p-6 flex justify-between items-center shadow-2xl">
+            <h1 class="text-3xl font-black italic tracking-tighter">SECUCODE <span class="text-blue-500">PRO</span></h1>
+            <div class="flex gap-2">
+                <button onclick="toggleTheme()" class="p-3 glass hover:scale-110 transition"><i data-lucide="sun"></i></button>
+                <div class="glass px-4 py-2 text-xs font-bold flex items-center gap-2">
+                    <span class="text-blue-500">TOTAL SCANS:</span>
+                    <span id="totalCount">0000</span>
                 </div>
-                <div>
-                    <h1 class="text-3xl font-black italic uppercase tracking-tighter">SecuCode <span class="text-blue-600">Pro</span></h1>
-                    <p id="txt-hero-sub" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"></p>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <button onclick="toggleLang()" id="langBtn" class="px-8 py-2 glass hover:bg-white/5 text-[10px] font-black uppercase transition-all tracking-widest border-white/10"></button>
-                <button onclick="toggleTheme()" id="themeBtn" class="px-8 py-2 glass hover:bg-white/5 text-[10px] font-black uppercase transition-all tracking-widest border-white/10">Light</button>
             </div>
         </header>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass p-5 border-l-4 border-l-blue-500">
-                <p id="txt-total-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1 tracking-widest"></p>
-                <span id="totalScanned" class="text-2xl font-black font-mono">0000</span>
+        <section class="glass p-8 md:p-12 space-y-6 text-center">
+            <h2 class="text-xl font-bold">مرحباً بك في نظام الفحص المتقدم</h2>
+            <div class="relative">
+                <input type="text" id="urlInput" class="w-full bg-black/20 border-2 border-white/5 p-6 rounded-2xl focus:border-blue-500 outline-none text-left font-mono" placeholder="https://example.com">
+                <button onclick="startScan()" id="scanBtn" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 transition-all">
+                    <i data-lucide="shield-check"></i> فحص الرابط الآن
+                </button>
             </div>
-            <div class="glass p-5 border-l-4 border-l-red-600">
-                <p id="txt-threats-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1 tracking-widest"></p>
-                <span id="threatsDetected" class="text-2xl font-black font-mono text-red-500">0000</span>
-            </div>
-            <div class="glass p-5"><p id="txt-accuracy-lbl" class="text-[9px] text-slate-500 font-black uppercase mb-1 tracking-widest"></p><span class="text-2xl font-black font-mono text-emerald-500">100.0%</span></div>
-            <div class="glass p-5 flex items-center justify-center"><span id="txt-status" class="px-4 py-1 bg-blue-600/10 text-blue-400 text-[10px] font-black rounded-full uppercase border border-blue-500/20"></span></div>
-        </div>
-
-        <section class="glass p-8 md:p-14 relative overflow-hidden shadow-2xl">
-            <div class="relative z-10 space-y-8">
-                <div class="space-y-2 text-center md:text-right">
-                    <h2 id="txt-input-label" class="text-xs font-black text-blue-500 uppercase tracking-[0.5em]"></h2>
-                    <p id="txt-input-sub" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest"></p>
+            
+            <div id="loader" class="hidden space-y-4">
+                <div class="flex justify-between text-[10px] font-black uppercase">
+                    <span>جاري التحليل...</span>
+                    <span id="progressText">0%</span>
                 </div>
-                <div class="flex flex-col gap-6">
-                    <div class="relative">
-                        <input type="text" id="urlInput" class="w-full bg-black/60 border-2 border-white/5 p-7 pr-24 rounded-3xl focus:border-blue-600 transition-all font-mono text-left" placeholder="https://example.com">
-                        <button onclick="openScanner()" class="absolute right-4 top-1/2 -translate-y-1/2 p-4 bg-blue-600/10 border border-blue-500/30 rounded-2xl">
-                            <i data-lucide="scan-line" class="w-7 h-7 text-blue-400"></i>
-                        </button>
-                    </div>
-                    <div id="urlError" class="hidden text-red-500 text-[10px] font-black uppercase px-4"></div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <button onclick="runAnalysis()" id="scanBtn" class="bg-blue-600 hover:bg-blue-700 py-6 rounded-3xl font-black text-xs uppercase flex items-center justify-center gap-5">
-                            <i data-lucide="zap" class="w-5 h-5 fill-current"></i> <span id="txt-scan-btn"></span>
-                        </button>
-                        <button onclick="clearInput()" id="txt-clear" class="bg-white/5 border border-white/10 py-6 rounded-3xl font-black text-[10px] uppercase text-slate-500 flex items-center justify-center gap-3"></button>
-                    </div>
+                <div class="w-full bg-white/10 h-3 rounded-full overflow-hidden">
+                    <div id="pBar" class="bg-blue-600 h-full transition-all duration-300" style="width: 0%"></div>
                 </div>
             </div>
         </section>
 
-        <div id="loader" class="hidden glass p-16 text-center">
-            <div class="animate-spin h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-6"></div>
-            <p id="loaderStatus" class="text-blue-500 font-black text-[11px] uppercase tracking-[0.3em]"></p>
-            <progress id="progressBar" value="0" max="100" class="w-full h-2 mt-4"></progress> <!-- Added progress bar -->
-        </div>
-
-        <div id="resultsArea" class="hidden space-y-6"></div>
-
-        <!-- New: History Dashboard -->
-        <section id="historySection" class="glass p-8 hidden">
-            <h2 class="text-2xl font-black text-blue-500 uppercase mb-6">Scan History</h2>
-            <ul id="historyList" class="space-y-4"></ul>
-            <button onclick="loadHistory()" class="bg-blue-600 py-4 px-6 rounded-2xl font-black text-xs uppercase mt-4">Refresh History</button>
-        </section>
-
-        <!-- New: Stats Chart -->
-        <section id="statsSection" class="glass p-8 hidden">
-            <h2 class="text-2xl font-black text-blue-500 uppercase mb-6">Global Stats</h2>
-            <canvas id="statsChart" width="400" height="200"></canvas>
-            <button onclick="loadStats()" class="bg-blue-600 py-4 px-6 rounded-2xl font-black text-xs uppercase mt-4">Refresh Stats</button>
-        </section>
-
-        <footer class="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8 text-[10px] text-slate-500 font-black uppercase">
-            <div class="flex gap-10">
-                <button onclick="openModal('aboutModal')" id="txt-footer-about" class="hover:text-blue-500"></button>
-                <button onclick="openModal('privModal')" id="txt-footer-priv" class="hover:text-red-500"></button>
-                <button onclick="toggleSection('historySection')" class="hover:text-green-500">History</button>
-                <button onclick="toggleSection('statsSection')" class="hover:text-green-500">Stats</button>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="glass p-6">
+                <h3 class="text-sm font-black mb-4 flex items-center gap-2"><i data-lucide="bar-chart"></i> إحصائيات النظام</h3>
+                <canvas id="statsChart"></canvas>
             </div>
-            <p id="txt-copyright"></p>
-        </footer>
-    </main>
-
-    <div id="scannerModal" class="modal"><div class="glass p-6 w-full max-w-sm mx-4"><div id="reader"></div><button onclick="closeScanner()" id="txt-close-cam" class="w-full mt-4 py-4 bg-red-600/10 text-red-500 font-black text-[11px] uppercase rounded-2xl"></button></div></div>
-    <div id="aboutModal" class="modal"><div class="glass p-10 max-w-lg mx-4 space-y-6"><h2 id="txt-m-about-title" class="text-2xl font-black text-blue-500 uppercase"></h2><p id="txt-m-about-desc" class="text-slate-400 text-sm leading-relaxed font-bold"></p><button onclick="closeModal('aboutModal')" class="btn-close w-full py-4 bg-white/5 rounded-2xl text-[10px] font-black uppercase"></button></div></div>
-    <div id="privModal" class="modal"><div class="glass p-10 max-w-lg mx-4 space-y-6"><h2 id="txt-m-priv-title" class="text-2xl font-black text-red-500 uppercase"></h2><p id="txt-m-priv-desc" class="text-slate-400 text-sm leading-relaxed font-bold"></p><button onclick="closeModal('privModal')" class="btn-close w-full py-4 bg-white/5 rounded-2xl text-[10px] font-black uppercase"></button></div></div>
+            <div class="glass p-6 h-64 overflow-y-auto">
+                <h3 class="text-sm font-black mb-4 flex items-center gap-2"><i data-lucide="history"></i> سجل الفحص الأخير</h3>
+                <ul id="historyList" class="space-y-3 text-[10px]"></ul>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = { databaseURL: "https://flutter-ai-playground-2de28-default-rtdb.europe-west1.firebasedatabase.app" };
+        const firebaseConfig = { databaseURL: "https://secucode-pro-default-rtdb.firebaseio.com/" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
-        const i18n = { /* ... same as original ... */ }; // Keep original i18n
-
-        let currentLang = 'ar';
-        let html5QrCode;
-        let userId = localStorage.getItem('userId') || 'user_' + Math.random().toString(36).slice(2); // Simple user ID
+        const userId = localStorage.getItem('userId') || 'user_' + Math.random().toString(36).slice(2, 9);
         localStorage.setItem('userId', userId);
 
-        window.toggleLang = () => { /* ... same as original ... */ };
+        lucide.createIcons();
 
-        // New: Toggle theme
+        // 1. تحديث العداد المباشر
+        onValue(ref(db, 'stats/total_scans'), (snapshot) => {
+            const count = snapshot.val() || 0;
+            document.getElementById('totalCount').innerText = String(count).padStart(4, '0');
+            updateChart(count);
+        });
+
+        // 2. دالة الفحص
+        window.startScan = async function() {
+            const url = document.getElementById('urlInput').value.trim();
+            if(!url) return;
+
+            const btn = document.getElementById('scanBtn');
+            const loader = document.getElementById('loader');
+            const pBar = document.getElementById('pBar');
+            const pText = document.getElementById('progressText');
+
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+
+            let p = 0;
+            const intv = setInterval(() => {
+                p += 2;
+                pBar.style.width = p + '%';
+                pText.innerText = p + '%';
+                if(p >= 100) clearInterval(intv);
+            }, 50);
+
+            try {
+                const res = await fetch('/scan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ url: url, user_id: userId })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    loadHistory();
+                    alert("تم الفحص بنجاح وإرسال التنبيه للتليجرام!");
+                }
+            } catch (e) {
+                alert("خطأ في الاتصال بالسيرفر");
+            } finally {
+                btn.disabled = false;
+                setTimeout(() => loader.classList.add('hidden'), 1000);
+            }
+        };
+
+        // 3. تحميل السجل
+        async function loadHistory() {
+            const res = await fetch('/history/' + userId);
+            const data = await res.json();
+            const list = document.getElementById('historyList');
+            list.innerHTML = data.map(item => `
+                <li class="bg-white/5 p-3 rounded-lg border border-white/5 flex justify-between">
+                    <span class="truncate w-40">${item.url}</span>
+                    <span class="text-blue-500">${new Date(item.timestamp * 1000).toLocaleTimeString()}</span>
+                </li>
+            `).join('');
+        }
+        loadHistory();
+
+        // 4. الرسم البياني
+        let chart;
+        function updateChart(count) {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['فحوصات ناجحة', 'أخطاء'],
+                    datasets: [{
+                        data: [count, 0],
+                        backgroundColor: ['#3b82f6', '#1e293b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
+        }
+
         window.toggleTheme = () => {
             document.body.classList.toggle('dark');
             document.body.classList.toggle('light');
-            const isDark = document.body.classList.contains('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            document.getElementById('themeBtn').innerText = isDark ? 'Light' : 'Dark';
         };
-        // Load theme
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.body.classList.add(savedTheme);
-        document.getElementById('themeBtn').innerText = savedTheme === 'dark' ? 'Light' : 'Dark';
-
-        // ... same validation and clearInput ...
-
-        window.runAnalysis = async function() {
-            // ... same input validation ...
-
-            document.getElementById('resultsArea').classList.add('hidden');
-            document.getElementById('loader').classList.remove('hidden');
-            document.getElementById('loaderStatus').innerText = i18n[currentLang].loading;
-
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += 10;
-                document.getElementById('progressBar').value = progress;
-                if (progress >= 100) clearInterval(progressInterval);
-            }, 500); // Simulated progress
-
-            try {
-                const res = await fetch('/analyze', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ link: url, user_id: userId }) 
-                });
-                const data = await res.json();
-                runTransaction(ref(db, 'stats/clicks'), c => (c || 0) + 1);
-                renderResults(data, url);
-            } catch {
-                renderResults({points: 0, violation_key: 'CLEAN_AUDIT'}, url);
-            } finally { 
-                document.getElementById('loader').classList.add('hidden'); 
-                clearInterval(progressInterval);
-            }
-        };
-
-        function renderResults(data, url) {
-            const area = document.getElementById('resultsArea');
-            area.classList.remove('hidden');
-            const d = i18n[currentLang];
-            
-            // ... same logic for risk, theme, etc. ...
-
-            area.innerHTML = `
-                <!-- ... same HTML structure, but add more details ... -->
-                <div class="grid lg:grid-cols-5 gap-8 animate-in zoom-in-95 duration-500">
-                    <!-- ... -->
-                    <div class="glass p-8 border-blue-500/10">
-                        <p class="text-[11px] font-black text-blue-500 uppercase mb-4 tracking-widest flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i> ${d.recTitle}</p>
-                        <p class="text-sm text-slate-200 font-bold leading-relaxed">${adviceText}</p>
-                        <p class="mt-4">AI Analysis: ${data.details.ai_analysis || 'N/A'}</p>
-                        <p>Redirects: ${data.details.redirects || 0}</p>
-                    </div>
-                    <!-- New: Share buttons -->
-                    <div class="flex gap-4 mt-4">
-                        <button onclick="shareResult('${url}', ${data.points})" class="bg-green-600 py-2 px-4 rounded">Share</button>
-                    </div>
-                </div>`;
-            lucide.createIcons();
-            area.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // New: Share function
-        window.shareResult = (url, score) => {
-            const text = `SecuCode Pro Scan: ${url} - Risk: ${score}%`;
-            if (navigator.share) {
-                navigator.share({ title: 'SecuCode Pro', text, url: window.location.href });
-            } else {
-                alert(text); // Fallback
-            }
-        };
-
-        // New: Load history
-        window.loadHistory = async () => {
-            const res = await fetch(`/history?user_id=${userId}`);
-            const history = await res.json();
-            const list = document.getElementById('historyList');
-            list.innerHTML = history.map(item => `<li class="glass p-4">URL: ${item.url} - Score: ${item.score}% - Time: ${new Date(item.timestamp * 1000).toLocaleString()}</li>`).join('');
-        };
-
-        // New: Load stats and render chart
-        window.loadStats = async () => {
-            const res = await fetch('/stats');
-            const stats = await res.json();
-            const ctx = document.getElementById('statsChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Total Scans', 'Threats'],
-                    datasets: [{ label: 'Stats', data: [stats.clicks, stats.threats], backgroundColor: ['#3b82f6', '#ef4444'] }]
-                },
-                options: { scales: { y: { beginAtZero: true } } }
-            });
-        };
-
-        // New: Toggle sections
-        window.toggleSection = (id) => {
-            const section = document.getElementById(id);
-            section.classList.toggle('hidden');
-            if (!section.classList.contains('hidden')) {
-                if (id === 'historySection') loadHistory();
-                if (id === 'statsSection') loadStats();
-            }
-        };
-
-        // ... same scanner, modals, onValue for stats ...
-
-        window.toggleLang();
     </script>
 </body>
 </html>
