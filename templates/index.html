@@ -1,20 +1,31 @@
+<!-- templates/index.html (النسخة المطورة والمصححة) -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecuCode Pro | Tarek Mostafa</title>
+    <meta name="description" content="نظام طارق مصطفى المتطور لفحص الروابط بالذكاء الاصطناعي">
+    <title>SecuCode Pro | Elite Security</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; transition: 0.3s; }
-        .dark { background: #020617; color: white; }
-        .light { background: #f8fafc; color: #020617; }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; }
+        body { font-family: 'Cairo', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .dark { background-color: #020617; color: white; }
+        .light { background-color: #f8fafc; color: #020617; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; transition: all 0.3s; }
         .light .glass { background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(0,0,0,0.1); }
+        .result-safe { color: #22c55e; }
+        .result-danger { color: #ef4444; }
+        .result-unknown { color: #eab308; }
     </style>
+    <link rel="manifest" href="/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js');
+        }
+    </script>
 </head>
 <body class="dark p-4 md:p-10">
     <div class="max-w-5xl mx-auto space-y-6">
@@ -46,6 +57,12 @@
                 <div class="w-full bg-white/10 h-3 rounded-full overflow-hidden">
                     <div id="pBar" class="bg-blue-600 h-full transition-all duration-300" style="width: 0%"></div>
                 </div>
+            </div>
+
+            <div id="scanResult" class="hidden mt-6 p-6 glass rounded-2xl space-y-4">
+                <h3 class="text-lg font-bold">نتائج الفحص:</h3>
+                <p id="resultMessage"></p>
+                <div id="vtDetails" class="text-sm"></div>
             </div>
         </section>
 
@@ -80,7 +97,7 @@
             updateChart(count);
         });
 
-        // 2. دالة الفحص
+        // 2. دالة الفحص مع عرض النتائج
         window.startScan = async function() {
             const url = document.getElementById('urlInput').value.trim();
             if(!url) return;
@@ -89,17 +106,21 @@
             const loader = document.getElementById('loader');
             const pBar = document.getElementById('pBar');
             const pText = document.getElementById('progressText');
+            const resultDiv = document.getElementById('scanResult');
+            const resultMsg = document.getElementById('resultMessage');
+            const vtDetails = document.getElementById('vtDetails');
 
             btn.disabled = true;
             loader.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
 
             let p = 0;
             const intv = setInterval(() => {
-                p += 2;
+                p = Math.min(p + 5, 100);  // تحسين البار ليكون أسرع
                 pBar.style.width = p + '%';
                 pText.innerText = p + '%';
                 if(p >= 100) clearInterval(intv);
-            }, 50);
+            }, 200);  // سرعة أبطأ لتبدو حقيقية
 
             try {
                 const res = await fetch('/scan', {
@@ -110,31 +131,60 @@
                 const data = await res.json();
                 if(data.status === 'success') {
                     loadHistory();
+                    // عرض نتائج VirusTotal
+                    const vt = data.vt_result;
+                    let message = '';
+                    let className = 'result-unknown';
+                    if (vt.malicious > 0) {
+                        message = `⚠️ الرابط مشبوه! عدد الكشوفات الضارة: ${vt.malicious}`;
+                        className = 'result-danger';
+                    } else if (vt.harmless > 0) {
+                        message = `✅ الرابط آمن. عدد الكشوفات الآمنة: ${vt.harmless}`;
+                        className = 'result-safe';
+                    } else {
+                        message = '❓ نتائج غير معروفة أو خطأ في الفحص.';
+                    }
+                    resultMsg.innerHTML = `<span class="\( {className}"> \){message}</span>`;
+                    vtDetails.innerHTML = `
+                        <p>عدد الكشوفات الضارة: ${vt.malicious || 0}</p>
+                        <p>عدد الكشوفات الآمنة: ${vt.harmless || 0}</p>
+                        <p>عدد الكشوفات غير المكتشفة: ${vt.undetected || 0}</p>
+                    `;
+                    resultDiv.classList.remove('hidden');
                     alert("تم الفحص بنجاح وإرسال التنبيه للتليجرام!");
+                } else {
+                    resultMsg.innerText = 'خطأ: ' + data.message;
+                    resultDiv.classList.remove('hidden');
                 }
             } catch (e) {
-                alert("خطأ في الاتصال بالسيرفر");
+                resultMsg.innerText = "خطأ في الاتصال بالسيرفر";
+                resultDiv.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
-                setTimeout(() => loader.classList.add('hidden'), 1000);
+                loader.classList.add('hidden');
             }
         };
 
-        // 3. تحميل السجل
+        // 3. تحميل السجل مع عرض نتائج الفحص
         async function loadHistory() {
             const res = await fetch('/history/' + userId);
             const data = await res.json();
             const list = document.getElementById('historyList');
-            list.innerHTML = data.map(item => `
-                <li class="bg-white/5 p-3 rounded-lg border border-white/5 flex justify-between">
-                    <span class="truncate w-40">${item.url}</span>
-                    <span class="text-blue-500">${new Date(item.timestamp * 1000).toLocaleTimeString()}</span>
-                </li>
-            `).join('');
+            list.innerHTML = data.map(item => {
+                const vt = item.vt_result || {};
+                const status = vt.malicious > 0 ? '⚠️ مشبوه' : (vt.harmless > 0 ? '✅ آمن' : '❓ غير معروف');
+                return `
+                    <li class="bg-white/5 p-3 rounded-lg border border-white/5 flex justify-between items-center">
+                        <span class="truncate w-40">${item.url}</span>
+                        <span class="text-blue-500">${new Date(item.timestamp * 1000).toLocaleString('ar-EG')}</span>
+                        <span class="ml-2">${status}</span>
+                    </li>
+                `;
+            }).join('');
         }
         loadHistory();
 
-        // 4. الرسم البياني
+        // 4. الرسم البياني (تحسين لعرض إحصائيات حقيقية)
         let chart;
         function updateChart(count) {
             const ctx = document.getElementById('statsChart').getContext('2d');
@@ -144,19 +194,29 @@
                 data: {
                     labels: ['فحوصات ناجحة', 'أخطاء'],
                     datasets: [{
-                        data: [count, 0],
+                        data: [count, 0],  // يمكن تحديث 'أخطاء' من Firebase إذا أضفت حقل errors
                         backgroundColor: ['#3b82f6', '#1e293b'],
                         borderWidth: 0
                     }]
                 },
-                options: { plugins: { legend: { display: false } } }
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
             });
         }
 
+        // 5. تبديل الثيم مع حفظ في localStorage
         window.toggleTheme = () => {
-            document.body.classList.toggle('dark');
-            document.body.classList.toggle('light');
+            const isDark = document.body.classList.toggle('dark');
+            document.body.classList.toggle('light', !isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
         };
+
+        // تحميل الثيم المحفوظ
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.classList.add(savedTheme);
+        if (savedTheme === 'light') document.body.classList.add('light');
     </script>
 </body>
 </html>
