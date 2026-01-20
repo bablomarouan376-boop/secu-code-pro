@@ -69,7 +69,7 @@
                 <div class="flex flex-col gap-6 max-w-4xl mx-auto">
                     <div class="relative group">
                         <input type="text" id="urlInput" class="w-full bg-black/80 border-2 border-white/10 p-8 pr-24 rounded-[2rem] focus:border-blue-600 transition-all font-mono text-left outline-none text-lg shadow-2xl" placeholder="https://">
-                        <button onclick="openScanner()" class="absolute right-4 top-1/2 -translate-y-1/2 p-5 bg-blue-600/10 border border-blue-500/30 rounded-2xl hover:bg-blue-600/20 transition-all group-hover:scale-105">
+                        <button onclick="openScanner()" class="absolute right-4 top-1/2 -translate-y-1/2 p-5 bg-blue-600/10 border border-blue-500/30 rounded-2xl hover:bg-blue-600/20 transition-all">
                             <i data-lucide="scan-line" class="w-8 h-8 text-blue-400"></i>
                         </button>
                     </div>
@@ -111,30 +111,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- قاعدة بيانات الاستخبارات الشاملة (البيضاء والسوداء) ---
         const SECU_DATA = {
             whiteList: [
-                'google.', 'bing.', 'yahoo.', 'duckduckgo.', 'baidu.', 'yandex.',
-                'facebook.', 'fb.com', 'instagram.', 'ig.me', 'threads.net', 'twitter.', 'x.com', 
-                'linkedin.', 'tiktok.', 'snapchat.', 'pinterest.', 'reddit.', 'tumblr.', 'flickr.',
-                'whatsapp.', 'wa.me', 'telegram.', 't.me', 'discord.', 'zoom.us', 'skype.', 'teams.microsoft.com',
-                'icloud.', 'apple.', 'microsoft.', 'office.', 'outlook.', 'gmail.', 'drive.google.', 
-                'dropbox.', 'onedrive.', 'pcloud.', 'mega.nz', 'box.com',
-                'amazon.', 'ebay.', 'aliexpress.', 'alibaba.', 'noon.com', 'jumia.', 'shopeefood.', 
-                'paypal.', 'stripe.', 'visa.com', 'mastercard.', 'payoneer.', 'binance.', 'coinbase.',
-                'youtube.', 'youtu.be', 'netflix.', 'spotify.', 'disneyplus.', 'twitch.tv', 'hulu.', 'soundcloud.',
-                'github.', 'gitlab.', 'bitbucket.', 'stackoverflow.', 'npm.js', 'cloudflare.', 'vercel.', 
-                'netlify.', 'heroku.', 'digitalocean.', 'aws.amazon.', 'firebase.', 'openai.', 'anthropic.',
-                'canva.', 'figma.', 'adobe.', 'behance.', 'dribbble.',
-                'wikipedia.org', 'coursera.', 'udemy.', 'edx.org', 'khanacademy.', 'medium.com', 'quora.',
-                '.gov', '.edu', '.org', '.mil', '.int'
+                'google.com', 'google.net', 'google.org', 'bing.com', 'yahoo.com', 'duckduckgo.com',
+                'facebook.com', 'fb.com', 'instagram.com', 'ig.me', 'twitter.com', 'x.com', 
+                'linkedin.com', 'tiktok.com', 'whatsapp.com', 'wa.me', 'telegram.org', 't.me',
+                'microsoft.com', 'apple.com', 'icloud.com', 'amazon.com', 'netflix.com', 'spotify.com',
+                'github.com', 'openai.com', 'gemini.google', 'cloudflare.com', 'noon.com', 'jumia.com',
+                '.gov', '.edu', '.org'
             ],
             blackList: [
-                'casajoys.com', 'ngrok-free.app', 'serveo.net', '000webhostapp.com', 'bitly.ws', 'cutt.ly', 
-                'is.gd', 't.ly', 'rb.gy', 'tinyurl.com', 'grabify.link', 'iplogger.org', 'blasze.com',
-                'leancoding.co', 'psref.it', 'yip.su', 'pcloud.link', 'camera-access.link', 
-                'login-facebook-verify.com', 'secure-update-apple.com', 'free-gems-generator.tk', 
-                'xss.ht', 'shell.la', 'exploit.in', 'malware-traffic-analysis.net', 'spyware.com'
+                'casajoys.com', 'ngrok-free.app', 'serveo.net', 'grabify.link', 'iplogger.org', 'is.gd'
             ]
         };
 
@@ -143,39 +130,37 @@
                 hero: "المطور الرئيسي: طارق مصطفى • تحديث الاستخبارات 2026",
                 total: "فحوصات الأمان", threats: "تهديدات محيدة", acc: "دقة التحليل", status: "نظام الذكاء: فعال",
                 inputLabel: "وحدة تحليل النواقل والبيانات:", inputSub: "نظام الاستخبارات الجنائية - طارق مصطفى 2026",
-                btn: "إطلاق فحص 2026", clear: "تطهير النواقل", loading: "يتم الآن مقارنة النطاق بقواعد بيانات الاستخبارات التاريخية والفورية...",
+                btn: "إطلاق فحص 2026", clear: "تطهير النواقل", loading: "يتم التحقق من النطاق عبر القوائم البيضاء والسوداء العالمية...",
                 closeCam: "تعطيل المستشعر", closeBtn: "إغلاق", about: "عن النظام", priv: "التشفير",
                 copy: "© 2026 SecuCode Pro • Tarek Mostafa",
                 mAboutTitle: "بروتوكول SecuCode 2026",
-                mAboutDesc: "نظام جنائي رقمي متقدم تم تطويره بواسطة طارق مصطفى، يعتمد على تحليل السلوك النمطي للروابط وقواعد بيانات التهديدات العالمية منذ عام 2016.",
-                mPrivTitle: "معايير الخصوصية والتشفير",
-                mPrivDesc: "كافة عمليات الفحص تتم عبر طبقة تشفير AES-256 بت، ولا يتم تخزين بيانات المستخدمين الحساسة.",
+                mAboutDesc: "نظام جنائي رقمي متقدم تم تطويره بواسطة طارق مصطفى لمراجعة أمان الروابط.",
+                mPrivTitle: "معايير الخصوصية",
+                mPrivDesc: "عمليات الفحص مشفرة بالكامل ولا يتم تخزين بيانات المستخدم.",
                 sig: "SIGNATURE: TAREK MOSTAFA CORE", risk: "معامل الخطورة", mode: "النمط", diagnostic: "التشخيص الفني:",
                 resSafe: "نطاق رسمي موثوق", resCrit: "تهديد سيبراني نشط",
-                spyAlert: "تنبيه جاسوس: تم رصد محاولة اختراق للكاميرا أو تتبع مشبوه!",
                 OFFICIAL: "تم التحقق: هذا النطاق ينتمي لمؤسسة تقنية كبرى وموثوقة عالمياً.",
-                MALICIOUS: "خطر جسيم: النطاق مدرج ضمن القائمة السوداء للاستخبارات (تجسس/تصيد).",
+                MALICIOUS: "خطر جسيم: النطاق مدرج ضمن القائمة السوداء للاستخبارات.",
                 CLEAN: "سليم: لم يتم رصد أنماط عدوانية في الوقت الحالي.",
-                download: "تحميل التقرير الرسمي", watermark: "طارق مصطفى - Tarek Mostafa"
+                download: "تحميل التقرير الرسمي", watermark: "طارق مصطفى"
             },
             en: {
                 hero: "Lead Developer: Tarek Mostafa • 2026 Intel Update",
                 total: "SECURITY AUDITS", threats: "THREATS BLOCKED", acc: "ACCURACY", status: "AI SYSTEM: ACTIVE",
                 inputLabel: "VECTOR ANALYSIS UNIT:", inputSub: "CRIMINAL INTEL CORE - TAREK MOSTAFA",
-                btn: "START 2026 SCAN", clear: "PURGE", loading: "Comparing domain with 10-year global threat intelligence...",
+                btn: "START 2026 SCAN", clear: "PURGE", loading: "Verifying domain via Global White/Black Lists...",
                 closeCam: "Disable Sensor", closeBtn: "Close", about: "PROTOCOL", priv: "ENCRYPTION",
-                copy: "© 2026 SecuCode Pro • TAREK MOSTAFA",
+                copy: "© 2026 SecuCode Pro • Tarek Mostafa",
                 mAboutTitle: "SecuCode Protocol 2026",
-                mAboutDesc: "Advanced digital forensic system by Tarek Mostafa, utilizing behavioral analysis and global threat databases since 2016.",
-                mPrivTitle: "Privacy & Encryption",
-                mPrivDesc: "All scans processed via AES-256 bit encryption. No sensitive user data is stored.",
+                mAboutDesc: "Advanced digital forensic system developed by Tarek Mostafa.",
+                mPrivTitle: "Privacy Standards",
+                mPrivDesc: "All scans are encrypted and private.",
                 sig: "SIGNATURE: TAREK MOSTAFA CORE", risk: "RISK FACTOR", mode: "MODE", diagnostic: "TECHNICAL DIAGNOSIS:",
                 resSafe: "TRUSTED OFFICIAL DOMAIN", resCrit: "ACTIVE CYBER THREAT",
-                spyAlert: "SPYWARE ALERT: Camera access or malicious tracking attempt detected!",
-                OFFICIAL: "Verified: Domain belongs to a trusted global tech corporation.",
-                MALICIOUS: "Critical Danger: Blacklisted in our intelligence database.",
-                CLEAN: "Clean: No malicious patterns detected in the current audit.",
-                download: "Download Official Report", watermark: "By Tarek Mostafa"
+                OFFICIAL: "Verified: Trusted global tech entity domain.",
+                MALICIOUS: "Critical Danger: Blacklisted domain detected.",
+                CLEAN: "Clean: No malicious patterns detected.",
+                download: "Download Report", watermark: "Tarek Mostafa"
             }
         };
 
@@ -219,7 +204,18 @@
             document.getElementById('resultsArea').classList.add('hidden');
             document.getElementById('loader').classList.remove('hidden');
 
+            // --- إصلاح الخطأ: الأولوية المطلقة للقائمة البيضاء ---
             const isOfficial = SECU_DATA.whiteList.some(d => url.includes(d));
+            
+            if (isOfficial) {
+                setTimeout(() => {
+                    renderResults({ is_official: true, is_blacklisted: false, points: 0 }, url);
+                    document.getElementById('loader').classList.add('hidden');
+                    runTransaction(ref(db, 'stats/clicks'), c => (c || 0) + 1);
+                }, 800);
+                return;
+            }
+
             const isBlacklisted = SECU_DATA.blackList.some(d => url.includes(d));
 
             try {
@@ -229,17 +225,9 @@
                     body: JSON.stringify({ link: url }) 
                 });
                 const serverData = await res.json();
-                
-                const finalData = {
-                    ...serverData,
-                    is_official: isOfficial,
-                    is_blacklisted: isBlacklisted || serverData.spy_detected || serverData.risk_score === 'Critical'
-                };
-
-                runTransaction(ref(db, 'stats/clicks'), c => (c || 0) + 1);
-                renderResults(finalData, url);
+                renderResults({ ...serverData, is_blacklisted: isBlacklisted || serverData.is_blacklisted }, url);
             } catch {
-                renderResults({ is_official: isOfficial, is_blacklisted: isBlacklisted, points: isBlacklisted ? 100 : 0 }, url);
+                renderResults({ is_official: false, is_blacklisted: isBlacklisted, points: isBlacklisted ? 99 : 10 }, url);
             } finally { 
                 document.getElementById('loader').classList.add('hidden'); 
             }
@@ -254,50 +242,24 @@
             const isSafe = data.is_official;
             const theme = isCrit ? 'var(--accent-red)' : (isSafe ? 'var(--accent-green)' : 'var(--accent-blue)');
             
-            let diagText = d.CLEAN;
-            if(isSafe) diagText = d.OFFICIAL;
-            if(isCrit) diagText = data.spy_detected ? d.spyAlert : d.MALICIOUS;
-
             area.innerHTML = `
                 <div id="captureArea" class="glass p-10 md:p-14 ${isCrit ? 'glow-red' : (isSafe ? 'glow-green' : '')}" style="border-top: 8px solid ${theme}">
                     <div class="grid lg:grid-cols-5 gap-12">
                         <div class="lg:col-span-3 space-y-10">
-                            <div class="flex items-center gap-8">
-                                <div class="p-4 bg-white/5 rounded-3xl border border-white/10 shadow-2xl">
-                                    <img src="https://raw.githubusercontent.com/bablomarouan376-boop/secu-code-pro/main/static/og-image.jpg" class="w-20 h-20 rounded-xl object-cover">
-                                </div>
-                                <div>
-                                    <h2 class="text-4xl font-black italic uppercase" style="color: ${theme}">${isCrit ? d.resCrit : d.resSafe}</h2>
-                                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] mt-1">${d.sig}</p>
-                                </div>
-                            </div>
-
+                            <h2 class="text-4xl font-black italic uppercase" style="color: ${theme}">${isCrit ? d.resCrit : d.resSafe}</h2>
                             <div class="bg-black/60 p-10 rounded-[2rem] border-r-[12px]" style="border-color: ${theme}">
-                                <h3 class="text-[11px] font-black text-slate-500 mb-4 uppercase">${d.diagnostic}</h3>
-                                <p class="text-white text-2xl md:text-3xl font-black italic leading-snug">${diagText}</p>
+                                <p class="text-white text-2xl font-black italic">${isSafe ? d.OFFICIAL : (isCrit ? d.MALICIOUS : d.CLEAN)}</p>
                             </div>
-
                             <div class="grid grid-cols-2 gap-8">
-                                <div class="glass p-8 text-center shadow-2xl">
-                                    <span class="text-[10px] text-slate-500 block font-black mb-3 uppercase">${d.risk}</span>
-                                    <span class="text-4xl font-black font-mono" style="color: ${theme}">${isCrit ? '99.9%' : (isSafe ? '0.0%' : (data.points || 0) + '%')}</span>
-                                </div>
-                                <div class="glass p-8 text-center shadow-2xl">
-                                    <span class="text-[10px] text-slate-500 block font-black mb-3 uppercase">${d.mode}</span>
-                                    <span class="text-[11px] font-black text-blue-500 uppercase tracking-widest">INTEL_2026_V2</span>
-                                </div>
+                                <div class="glass p-8 text-center"><span class="block text-[10px] mb-2 uppercase">${d.risk}</span><span class="text-4xl font-black" style="color: ${theme}">${isSafe ? '0%' : (isCrit ? '99.9%' : '15%')}</span></div>
+                                <div class="glass p-8 text-center"><span class="block text-[10px] mb-2 uppercase">${d.mode}</span><span class="text-[11px] font-black text-blue-500 uppercase">INTEL_2026</span></div>
                             </div>
                         </div>
-
-                        <div class="lg:col-span-2 space-y-8">
-                            <div class="glass h-[350px] overflow-hidden relative rounded-[2.5rem] border border-white/10 shadow-2xl">
+                        <div class="lg:col-span-2">
+                            <div class="glass h-[300px] relative rounded-[2.5rem] overflow-hidden">
                                 <div class="scan-anim"></div>
                                 <img src="https://s0.wp.com/mshots/v1/${encodeURIComponent(url)}?w=800&h=600" class="w-full h-full object-cover">
-                                <div class="watermark uppercase">${d.watermark}</div>
                             </div>
-                            <button onclick="downloadReport()" class="w-full py-7 bg-blue-600 hover:bg-blue-700 rounded-[1.5rem] text-xs font-black uppercase flex items-center justify-center gap-5 transition-all shadow-lg">
-                                <i data-lucide="download-cloud"></i> ${d.download}
-                            </button>
                         </div>
                     </div>
                 </div>`;
@@ -308,9 +270,9 @@
         }
 
         window.downloadReport = function() {
-            html2canvas(document.getElementById('captureArea'), { backgroundColor: '#020617', scale: 2, useCORS: true }).then(canvas => {
+            html2canvas(document.getElementById('captureArea'), { backgroundColor: '#020617', scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `SECU_REPORT_${Date.now()}.png`;
+                link.download = `SECU_REPORT.png`;
                 link.href = canvas.toDataURL();
                 link.click();
             });
@@ -319,7 +281,7 @@
         window.openScanner = async function() {
             document.getElementById('scannerModal').classList.add('active');
             html5QrCode = new Html5Qrcode("reader");
-            await html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (txt) => {
+            await html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (txt) => {
                 document.getElementById('urlInput').value = txt;
                 closeScanner(); runAnalysis();
             }).catch(() => closeScanner());
