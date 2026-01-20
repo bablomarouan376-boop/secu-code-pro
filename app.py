@@ -8,7 +8,7 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = "8072400877:AAEhIU4s8csph7d6NBM5MlZDlfWIAV7ca2o"
 CHAT_ID = "7421725464"
 
-# 1. إصلاح مسارات الملفات الثابتة لتعمل في كل الظروف (Root & API)
+# 1. إصلاح مسارات الملفات الثابتة
 @app.route('/robots.txt')
 @app.route('/api/robots')
 def robots(): 
@@ -23,6 +23,12 @@ def sitemap():
 @app.route('/api/sw')
 def sw(): 
     return send_from_directory('static', 'sw.js')
+
+# --- الجزء المضاف لحل مشكلة الصور ---
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
+# -----------------------------------
 
 # 2. الواجهة الرئيسية
 @app.route('/')
