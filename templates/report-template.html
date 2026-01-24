@@ -1,0 +1,50 @@
+<div id="pdf-report" style="display: none;">
+  <div class="a4-page">
+    <header class="report-header">
+      <div class="logo-and-title">
+        <img src="https://raw.githubusercontent.com/bablomarouan376-boop/secu-code-pro/main/static/og-image.jpg" 
+             alt="SecuCode Pro" width="80" height="80">
+        <h1 id="report-title">SecuCode Pro Report</h1>
+      </div>
+      <div class="meta">
+        <p><span data-i18n="report.date"></span>: <span id="report-date"></span></p>
+        <p><span data-i18n="report.scanned"></span>: <span id="report-url"></span></p>
+      </div>
+    </header>
+
+    <section class="summary">
+      <h2 data-i18n="report.summary"></h2>
+      <div class="risk-box" id="risk-level-box">
+        <span id="risk-status-text"></span>
+      </div>
+      <div class="risk-score-line">
+        <span data-i18n="report.risk"></span>: <strong id="risk-score">0%</strong>
+      </div>
+    </section>
+
+    <section class="details">
+      <h2 data-i18n="report.details"></h2>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="report.field"></th>
+            <th data-i18n="report.value"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td data-i18n="report.domain"></td><td id="detail-domain"></td></tr>
+          <tr><td data-i18n="report.ip"></td><td id="detail-ip"></td></tr>
+          <tr><td data-i18n="report.country"></td><td id="detail-country"></td></tr>
+          <tr><td data-i18n="report.vt-malicious"></td><td id="detail-vt-malicious">0</td></tr>
+          <tr><td data-i18n="report.server-org"></td><td id="detail-org">—</td></tr>
+          <tr><td data-i18n="report.timestamp"></td><td id="detail-timestamp">—</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="report-footer">
+      <p data-i18n="report.footer"></p>
+      <p data-i18n="report.disclaimer"></p>
+    </footer>
+  </div>
+</div>
