@@ -26,6 +26,8 @@
         @keyframes scan-line { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
         #toast { position: fixed; top: 20px; right: 20px; z-index: 10000; transform: translateX(150%); transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #toast.active { transform: translateX(0); }
+
+        /* CSS جديد للتقرير (لو عايز تستخدمه في frontend، لكن الآن في backend) */
     </style>
 </head>
 <body class="cyber-grid p-4 md:p-8">
@@ -120,10 +122,15 @@
                 mAboutDesc: "نظام استخباراتي تم تطويره بواسطة طارق مصطفى لفحص وتأمين الروابط الرقمية باستخدام تقنيات التحليل الجنائي.",
                 mPrivTitle: "تشفير البيانات",
                 mPrivDesc: "عمليات الفحص مشفرة بالكامل. نحن نؤمن بأن الخصوصية حق إنساني أساسي.",
-                risk: "معامل الخطورة", mode: "محرك التحليل", resSafe: "نطاق موثوق", resCrit: "تهديد سيبراني",
-                OFFICIAL: "نطاق رسمي موثوق.", MALICIOUS: "خطر: تهديد أو تجسس مكتشف.", CLEAN: "نطاق سليم تقنياً.",
+                risk: "معامل الخطورة", mode: "محرك التحليل", resSafe: "نطاق آمن", resCrit: "تهديد سيبراني",
+                resClean: "نطاق نظيف (غير معروف)",
+                OFFICIAL: "نطاق رسمي موثوق.", MALICIOUS: "خطر: تهديد أو تجسس مكتشف.", CLEAN: "نطاق سليم تقنياً (لا مخاطر معروفة).",
                 download: "تصدير تقرير PDF", watermark: "طارق مصطفى",
-                alertSafe: "نطاق آمن", alertDanger: "تحذير أمني", msgSafe: "تم التحقق من سلامة الرابط.", msgDanger: "تم رصد نشاط مشبوه أو تجسس!"
+                alertSafe: "نطاق آمن", alertDanger: "تحذير أمني", msgSafe: "تم التحقق من سلامة الرابط.", msgDanger: "تم رصد نشاط مشبوه أو تجسس!",
+                safeDescription: "النطاق آمن وموثوق. لا تهديدات مكتشفة.",
+                suspiciousDescription: "النطاق نظيف لكن غير معروف رسمياً. يُنصح بالحذر.",
+                maliciousDescription: "تهديد مكتشف! تجنب الرابط لأنه يحتوي على برمجيات ضارة أو تجسس.",
+                disclaimer: "هذه النتيجة تعتمد على قاعدة بيانات داخلية. لفحص أكثر دقة، استخدم VirusTotal.com أو urlscan.io."
             },
             en: {
                 hero: "Lead Dev: Tarek Mostafa • 2026 Intel",
@@ -136,15 +143,22 @@
                 mAboutDesc: "Forensic intelligence system developed by Tarek Mostafa for digital link verification.",
                 mPrivTitle: "Encryption",
                 mPrivDesc: "All scans are end-to-end encrypted. We prioritize your privacy.",
-                risk: "RISK FACTOR", mode: "ENGINE", resSafe: "TRUSTED DOMAIN", resCrit: "CYBER THREAT",
-                OFFICIAL: "Official Trusted Domain.", MALICIOUS: "Danger: Malicious or Spyware detected.", CLEAN: "Technically clean domain.",
+                risk: "RISK FACTOR", mode: "ENGINE", resSafe: "SAFE DOMAIN", resCrit: "CYBER THREAT",
+                resClean: "CLEAN DOMAIN (UNKNOWN)",
+                OFFICIAL: "Official Trusted Domain.", MALICIOUS: "Danger: Malicious or Spyware detected.", CLEAN: "Technically clean domain (no known threats).",
                 download: "Export PDF Report", watermark: "Tarek Mostafa",
-                alertSafe: "Safe Domain", alertDanger: "Security Alert", msgSafe: "Link verified and safe.", msgDanger: "Suspicious activity or spyware detected!"
+                alertSafe: "Safe Domain", alertDanger: "Security Alert", msgSafe: "Link verified and safe.", msgDanger: "Suspicious activity or spyware detected!",
+                safeDescription: "The domain is safe and trusted. No threats detected.",
+                suspiciousDescription: "The domain is clean but not officially known. Proceed with caution.",
+                maliciousDescription: "Threat detected! Avoid the link as it contains malware or spyware.",
+                disclaimer: "This result is based on internal database. For more accurate scan, use VirusTotal.com or urlscan.io."
             }
         };
 
         let currentLang = 'ar';
         let html5QrCode;
+        let lastScanResult = null;
+        let lastScannedUrl = '';
 
         function showToast(type, title, msg) {
             const toast = document.getElementById('toast');
@@ -203,6 +217,9 @@
                 });
                 const result = await response.json();
                 
+                lastScanResult = result;
+                lastScannedUrl = url;
+                
                 renderResults(result, url);
                 
                 const d = i18n[currentLang];
@@ -223,16 +240,21 @@
             const isSafe = data.is_official;
             const theme = isCrit ? 'var(--accent-red)' : (isSafe ? 'var(--accent-green)' : 'var(--accent-blue)');
             
+            let statusTitle = isCrit ? d.resCrit : (isSafe ? d.resSafe : d.resClean);
+            let statusDesc = isSafe ? d.OFFICIAL : (isCrit ? d.MALICIOUS : d.CLEAN);
+            let description = isCrit ? d.maliciousDescription : (isSafe ? d.safeDescription : d.suspiciousDescription);
+            
             area.innerHTML = `
                 <div id="captureArea" class="glass p-8 md:p-12 ${isCrit ? 'glow-red' : (isSafe ? 'glow-green' : '')}" style="border-top: 4px solid ${theme}">
                     <div class="grid lg:grid-cols-5 gap-8">
                         <div class="lg:col-span-3 space-y-6">
-                            <h2 class="text-3xl font-black italic uppercase" style="color: \( {theme}"> \){isCrit ? d.resCrit : d.resSafe}</h2>
-                            <div class="bg-black/40 p-6 rounded-2xl border-r-8" style="border-color: \( {theme}"><p class="text-white text-lg font-bold"> \){isSafe ? d.OFFICIAL : (isCrit ? d.MALICIOUS : d.CLEAN)}</p></div>
+                            <h2 class="text-3xl font-black italic uppercase" style="color: \( {theme}"> \){statusTitle}</h2>
+                            <div class="bg-black/40 p-6 rounded-2xl border-r-8" style="border-color: \( {theme}"><p class="text-white text-lg font-bold"> \){statusDesc}</p><p class="text-slate-300 text-sm mt-2">${description}</p></div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="glass p-4 text-center"><span class="block text-[9px] mb-1 text-slate-500 uppercase">${d.risk}</span><span class="text-2xl font-black" style="color: \( {theme}"> \){data.risk_score}%</span></div>
                                 <div class="glass p-4 text-center"><span class="block text-[9px] mb-1 text-slate-500 uppercase">${d.mode}</span><span class="text-[10px] font-black text-blue-500 uppercase">FORENSIC_V2</span></div>
                             </div>
+                            <p class="text-slate-300 text-sm mt-2">${d.disclaimer}</p>
                             <button onclick="downloadPDF()" class="w-full py-4 glass border-white/10 text-[10px] font-black uppercase hover:bg-blue-600/10 transition-all flex items-center justify-center gap-2">
                                 <i data-lucide="file-text" class="w-4 h-4"></i> ${d.download}
                             </button>
@@ -251,12 +273,29 @@
         }
 
         window.downloadPDF = async function() {
-            const { jsPDF } = window.jspdf;
-            const element = document.getElementById('captureArea');
-            const canvas = await html2canvas(element, { backgroundColor: '#020617', scale: 2 });
-            const pdf = new jsPDF('l', 'mm', 'a4');
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 277, 150);
-            pdf.save(`SECU_REPORT_${Date.now()}.pdf`);
+            if (!lastScanResult) {
+                showToast('danger', 'Error', currentLang === 'ar' ? 'لا توجد نتيجة فحص لحفظها' : 'No scan result to export');
+                return;
+            }
+
+            try {
+                const response = await fetch('/generate_report', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ result: lastScanResult, lang: currentLang })
+                });
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `SecuCode_Report_${Date.now()}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (e) {
+                showToast('danger', 'Error', 'Failed to generate report');
+            }
         };
 
         window.openScanner = async function() {
