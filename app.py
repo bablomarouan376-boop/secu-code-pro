@@ -14,15 +14,15 @@ from io import BytesIO
 
 app = Flask(__name__)
 
-# إعداد السجلات (Logging)
+# إعداد السجلات (Logging) لمتابعة العمليات
 logging.basicConfig(level=logging.INFO)
 
-# --- البيانات الحساسة ---
+# --- بيانات الوصول والرموز الحساسة ---
 VT_API_KEY = "07c7587e1d272b5f0187493944bb59ba9a29a56a16c2df681ab56b3f3c887564"
 TELEGRAM_TOKEN = "8072400877:AAEhIU4s8csph7d6NBM5MlZDlfWIAV7ca2o"
 CHAT_ID = "7421725464"
 
-# بيانات Firebase
+# إعدادات Firebase Admin SDK
 FIREBASE_CONFIG = {
   "type": "service_account",
   "project_id": "secucode-pro",
@@ -37,7 +37,7 @@ FIREBASE_CONFIG = {
   "universe_domain": "googleapis.com"
 }
 
-# إعداد Firebase
+# تشغيل Firebase
 try:
     if not firebase_admin._apps:
         cred = credentials.Certificate(FIREBASE_CONFIG)
@@ -45,7 +45,7 @@ try:
             'databaseURL': 'https://flutter-ai-playground-2de28-default-rtdb.europe-west1.firebasedatabase.app'
         })
 except Exception as e:
-    logging.error(f"Firebase failed: {e}")
+    logging.error(f"Firebase Init Error: {e}")
 
 WHITELIST_DOMAINS = ['google.com', 'microsoft.com', 'apple.com', 'facebook.com', 'github.com', 'wikipedia.org']
 
@@ -81,7 +81,7 @@ def analyze():
     try:
         data = request.get_json()
         raw_url = data.get('link', '').strip()
-        if not raw_url: return jsonify({"error": "No URL"}), 400
+        if not raw_url: return jsonify({"error": "No URL provided"}), 400
         
         url = raw_url if raw_url.startswith('http') else 'https://' + raw_url
         domain = urlparse(url).netloc.lower() or url
@@ -94,17 +94,17 @@ def analyze():
         risk_score = 0 if is_official else min(20 + (mal_count * 20), 100)
         is_blacklisted = risk_score >= 60
 
-        # Firebase stats
+        # تحديث إحصائيات Firebase
         try:
             db.reference('stats/clicks').transaction(lambda c: (c or 0) + 1)
             if is_blacklisted:
                 db.reference('stats/threats').transaction(lambda t: (t or 0) + 1)
         except: pass
 
-        # Telegram notification
+        # إرسال تنبيه تليجرام
         try:
-            icon = "🛑" if is_blacklisted else "✅"
-            msg = f"{icon} *SecuCode Scan*\n*URL:* {domain}\n*Risk:* {risk_score}%\n*IP:* {server_info['ip']}"
+            status_icon = "🛑" if is_blacklisted else "✅"
+            msg = f"{status_icon} *SecuCode Scan Result*\n*Domain:* {domain}\n*Risk:* {risk_score}%\n*IP:* {server_info['ip']}\n*Org:* {server_info['org']}"
             requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", 
                           json={"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"})
         except: pass
@@ -115,7 +115,8 @@ def analyze():
             "risk_score": risk_score,
             "server": server_info,
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "screenshot": f"https://s0.wp.com/mshots/v1/{url}?w=800&h=600"
+            "screenshot": f"https://s0.wp.com/mshots/v1/{url}?w=800&h=600",
+            "url": url
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -127,26 +128,27 @@ def generate_report():
         res = data.get('result', {})
         lang = data.get('lang', 'ar')
 
+        # هنا يتم استدعاء ملف report.html من مجلد templates
         rendered_html = render_template('report.html', data=res, lang=lang)
 
         buffer = BytesIO()
         pisa_status = pisa.CreatePDF(rendered_html, dest=buffer)
         
         if pisa_status.err:
-            return jsonify({"error": "PDF Error"}), 500
+            return "Error generating PDF", 500
             
         pdf_data = buffer.getvalue()
         buffer.close()
         
-        # تحويل البيانات إلى Base64 لتجنب أي تدخل من السيرفر في نوع الملف
-        encoded_pdf = base64.b64encode(pdf_data).decode('utf-8')
+        # إرسال الملف بصيغة Binary خام لإجبار المتصفح على تحميله كـ PDF
+        response = make_response(pdf_data)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=SecuCode_Report.pdf'
+        response.headers['Content-Transfer-Encoding'] = 'binary'
         
-        return jsonify({
-            "status": "success",
-            "pdf_data": encoded_pdf
-        })
+        return response
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return str(e), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
